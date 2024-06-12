@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">LiveLink</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="register_title">REGISTRIEREN</string>
+    <string name="already_registered">Bereits registriert? Zur Anmeldung</string>
+    <string name="username">Username</string>
+    <string name="password">Passwort</string>
+    <string name="password_again">Passwort wdh.</string>
+    <string name="email">E-Mail</string>
+    <string name="login_button">Einloggen</string>
+    <string name="signup_link">Noch nicht registriert? Hier lang</string>
+    <string name="forgot_password">Passwort vergessen</string>
+</resources>
