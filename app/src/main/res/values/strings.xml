@@ -20,4 +20,6 @@
     <string name="signup_link">Noch nicht registriert? Hier lang</string>
     <string name="forgot_password">Passwort vergessen</string>
     <string name="logout">Ausloggen</string>
+    <string name="channel">Channels</string>
+    <string name="profiledit">Profil bearbeiten</string>
 </resources>

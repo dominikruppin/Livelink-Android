@@ -1,6 +1,7 @@
 package com.livelink
 
 import android.app.Application
+import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
@@ -12,6 +13,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.FirebaseStorage
 import com.livelink.data.UserData
 
 class SharedViewModel: ViewModel() {
@@ -19,12 +22,18 @@ class SharedViewModel: ViewModel() {
     // val chatDatabase = FirebaseDatabase.getInstance()
     val database = FirebaseFirestore.getInstance()
     val usersCollectionReference = database.collection("users")
+    val storage = FirebaseStorage.getInstance()
 
-    private val _currentUser = MutableLiveData<FirebaseUser?>()
+    private val _currentUser = MutableLiveData<FirebaseUser?>(auth.currentUser)
     val currentUser : LiveData<FirebaseUser?>
         get() = _currentUser
 
+    private val _userData = MutableLiveData<UserData>()
+    val userData: LiveData<UserData>
+        get() = _userData
+
     private var userDataDocumentReference: DocumentReference? = null
+    private var userDataListener: ListenerRegistration? = null
 
     init {
         setupUserEnv()
@@ -32,8 +41,31 @@ class SharedViewModel: ViewModel() {
 
     fun setupUserEnv() {
         _currentUser.postValue(auth.currentUser)
-        if(currentUser.value != null){
+        if (currentUser.value != null) {
             userDataDocumentReference = usersCollectionReference.document(currentUser.value!!.uid)
+            startUserDataListener()
+        } else {
+            userDataListener?.remove()
+            userDataListener = null
+        }
+    }
+
+    private fun startUserDataListener() {
+        userDataListener?.remove()
+
+        userDataListener = userDataDocumentReference?.addSnapshotListener { snapshot, exception ->
+            if (exception != null) {
+                Log.e("UserDataListener", "Listen failed", exception)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && snapshot.exists()) {
+                val userData = snapshot.toObject(UserData::class.java)
+                _userData.postValue(userData ?: UserData())
+            } else {
+                Log.d("UserDataListener", "Current data: null")
+                _userData.postValue(UserData())
+            }
         }
     }
 
@@ -96,6 +128,25 @@ class SharedViewModel: ViewModel() {
         Log.d("Logout", "Logout wird durchgeführt für User: ${currentUser.value}")
         auth.signOut()
         setupUserEnv()
+    }
+
+    fun uploadProfilePicture(uri: Uri) {
+        val currentTimestampMillis = System.currentTimeMillis()
+        val imageRef = storage.reference.child(
+            "images/"
+                    + currentUser.value!!.uid +
+                    "/profilepics/" + currentTimestampMillis)
+
+        val uploadTask = imageRef.putFile(uri)
+
+        // Ausführen des UploadTasks
+        uploadTask.addOnCompleteListener {
+            imageRef.downloadUrl.addOnSuccessListener {
+                val imageUrl = it.toString()
+                Log.d("ProfilePicUrl", imageUrl)
+                userDataDocumentReference?.update("profilePic" , imageUrl)
+            }
+        }
     }
 
 }

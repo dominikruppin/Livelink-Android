@@ -53,7 +53,10 @@ dependencies {
     implementation(libs.androidx.annotation)
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("io.coil-kt:coil:1.4.0")
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 }

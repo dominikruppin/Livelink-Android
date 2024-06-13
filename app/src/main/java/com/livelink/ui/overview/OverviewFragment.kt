@@ -1,21 +1,21 @@
-package com.livelink.ui.home
+package com.livelink.ui.overview
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.livelink.R
 import com.livelink.SharedViewModel
-import com.livelink.databinding.FragmentHomeBinding
+import com.livelink.databinding.FragmentOverviewBinding
 
-class HomeFragment : Fragment() {
 
-    private lateinit var binding: FragmentHomeBinding
+class OverviewFragment : Fragment() {
+
+    private lateinit var binding: FragmentOverviewBinding
     private val viewModel: SharedViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -23,7 +23,7 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentHomeBinding.inflate(inflater, container, false)
+        binding = FragmentOverviewBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -33,6 +33,10 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.loginFragment)
         }
 
+        requireActivity().title = "Übersicht"
 
+        viewModel.userData.observe(viewLifecycleOwner) {
+            Log.d("UserData", it.toString())
+        }
     }
 }

@@ -38,7 +38,8 @@
         app:startIconDrawable="@drawable/baseline_person_24"
         app:startIconTint="@color/white"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/LoginTitleTV">
+        app:layout_constraintTop_toBottomOf="@id/LoginTitleTV"
+        app:errorEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/LoginUsernameEditText"
@@ -49,39 +50,38 @@
             android:inputType="text|textNoSuggestions"
             android:textColorHint="@color/white"
             android:paddingStart="48dp"
-            android:textColor="@android:color/black"/>
+            android:textColor="@android:color/black" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/LoginPasswordInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:backgroundTint="@android:color/transparent"
         android:hint="@string/password"
         app:boxBackgroundColor="@android:color/transparent"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
+        app:boxBackgroundMode="filled"
         app:boxCornerRadiusBottomEnd="30dp"
         app:boxCornerRadiusBottomStart="30dp"
         app:boxCornerRadiusTopEnd="30dp"
         app:boxCornerRadiusTopStart="30dp"
-        app:boxBackgroundMode="filled"
         app:boxStrokeWidth="0dp"
         app:boxStrokeWidthFocused="0dp"
-        app:startIconDrawable="@drawable/baseline_lock_outline_24"
-        app:startIconTint="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/LoginUsernameInputLayout">
+        app:layout_constraintTop_toBottomOf="@id/LoginUsernameInputLayout"
+        app:startIconDrawable="@drawable/baseline_lock_outline_24"
+        app:startIconTint="@color/white">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/LoginPasswordEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:backgroundTint="#80FFFFFF"
-            android:paddingStart="48dp"
             android:inputType="textPassword"
+            android:paddingStart="48dp"
             android:textColor="@android:color/black" />
     </com.google.android.material.textfield.TextInputLayout>
 

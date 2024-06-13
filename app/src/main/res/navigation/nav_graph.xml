@@ -3,25 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/nav_home">
+    app:startDestination="@id/overviewFragment">
 
-    <fragment
-        android:id="@+id/nav_home"
-        android:name="com.livelink.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
-
-    <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.livelink.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
-
-    <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.livelink.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
     <fragment
         android:id="@+id/registerFragment"
         android:name="com.livelink.ui.register.RegisterFragment"
@@ -32,4 +15,19 @@
         android:name="com.livelink.ui.login.LoginFragment"
         android:label="LoginFragment"
         tools:layout="@layout/fragment_login"/>
+    <fragment
+        android:id="@+id/overviewFragment"
+        android:name="com.livelink.ui.overview.OverviewFragment"
+        android:label="fragment_overview"
+        tools:layout="@layout/fragment_overview" />
+    <fragment
+        android:id="@+id/channelsFragment"
+        android:name="com.livelink.ui.channels.ChannelsFragment"
+        android:label="fragment_channels"
+        tools:layout="@layout/fragment_channels" />
+    <fragment
+        android:id="@+id/editProfilFragment"
+        android:name="com.livelink.ui.editprofil.EditProfilFragment"
+        android:label="fragment_editprofil"
+        tools:layout="@layout/fragment_editprofil" />
 </navigation>

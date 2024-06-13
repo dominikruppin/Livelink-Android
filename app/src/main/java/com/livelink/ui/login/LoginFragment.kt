@@ -74,7 +74,7 @@ class LoginFragment : Fragment() {
                         viewModel.login(email, password) { success ->
                             if (success) {
                                 Log.d("Login", "Login successLogin")
-                                findNavController().navigate(R.id.nav_home)
+                                findNavController().navigate(R.id.overviewFragment)
                             } else {
                                 Toast.makeText(
                                     requireContext(),
