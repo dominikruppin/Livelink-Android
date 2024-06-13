@@ -150,4 +150,3 @@ class RegisterFragment : Fragment() {
             }
         }
     }
-}

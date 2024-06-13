@@ -19,4 +19,5 @@
     <string name="login_button">Einloggen</string>
     <string name="signup_link">Noch nicht registriert? Hier lang</string>
     <string name="forgot_password">Passwort vergessen</string>
+    <string name="logout">Ausloggen</string>
 </resources>

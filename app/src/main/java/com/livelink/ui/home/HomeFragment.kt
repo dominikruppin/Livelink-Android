@@ -29,10 +29,10 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.currentUser.observe(viewLifecycleOwner) { user ->
-            if (user == null) {
-                findNavController().navigate(R.id.loginFragment)
-            }
+        if (viewModel.currentUser.value == null) {
+            findNavController().navigate(R.id.loginFragment)
         }
+
+
     }
 }

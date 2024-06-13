@@ -1,6 +1,7 @@
 package com.livelink
 
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.AndroidViewModel
@@ -30,7 +31,7 @@ class SharedViewModel: ViewModel() {
     }
 
     fun setupUserEnv() {
-        _currentUser.postValue(currentUser.value)
+        _currentUser.postValue(auth.currentUser)
         if(currentUser.value != null){
             userDataDocumentReference = usersCollectionReference.document(currentUser.value!!.uid)
         }
@@ -66,6 +67,35 @@ class SharedViewModel: ViewModel() {
             .addOnFailureListener {
                 callback(false)
             }
+    }
+
+    fun getMailFromUsername(username: String, callback: (String?) -> Unit) {
+        usersCollectionReference.whereEqualTo("username", username).get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val email = documents.documents[0].getString("email")
+                    callback(email)
+                } else {
+                    callback(null)
+                }
+            }
+    }
+
+    fun login(email: String, password: String, callback: (Boolean) -> Unit) {
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener {
+                setupUserEnv()
+                callback(true)
+            }
+            .addOnFailureListener {
+                callback(false)
+            }
+    }
+
+    fun logout() {
+        Log.d("Logout", "Logout wird durchgeführt für User: ${currentUser.value}")
+        auth.signOut()
+        setupUserEnv()
     }
 
 }
