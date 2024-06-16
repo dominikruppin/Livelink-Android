@@ -35,8 +35,8 @@ class OverviewFragment : Fragment() {
 
         requireActivity().title = "Übersicht"
 
-        viewModel.userData.observe(viewLifecycleOwner) {
+        /*viewModel.userData.observe(viewLifecycleOwner) {
             Log.d("UserData", it.toString())
-        }
+        }*/
     }
 }

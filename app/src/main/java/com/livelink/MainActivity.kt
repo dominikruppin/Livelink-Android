@@ -2,6 +2,7 @@ package com.livelink
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ImageView
@@ -19,6 +20,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.livelink.databinding.ActivityMainBinding
 import androidx.activity.viewModels
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import coil.load
@@ -72,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.userData.observe(this) { user ->
+            Log.d("UserData", user.toString())
             val username = headerBinding.findViewById<TextView>(R.id.MenuUsername)
 
             if (user.profilePic == null) {
