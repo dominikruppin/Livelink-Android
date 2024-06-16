@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
 
         appBarConfiguration = AppBarConfiguration(
             setOf(
-                R.id.overviewFragment, R.id.channelsFragment, R.id.editProfilFragment
+                R.id.overviewFragment, R.id.channelsFragment, R.id.editProfileFragment
             ), drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
@@ -67,9 +67,19 @@ class MainActivity : AppCompatActivity() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.registerFragment -> supportActionBar?.hide()
-                R.id.loginFragment -> supportActionBar?.hide()
-                else -> supportActionBar?.show()
+                R.id.overviewFragment -> {
+                    supportActionBar?.show()
+                    supportActionBar?.title = "Übersicht"
+                }
+                R.id.channelsFragment -> {
+                    supportActionBar?.show()
+                    supportActionBar?.title = "Channels"
+                }
+                R.id.editProfileFragment -> {
+                    supportActionBar?.show()
+                    supportActionBar?.title = "Profil bearbeiten"
+                }
+                else -> supportActionBar?.hide()
             }
         }
 
@@ -77,10 +87,10 @@ class MainActivity : AppCompatActivity() {
             Log.d("UserData", user.toString())
             val username = headerBinding.findViewById<TextView>(R.id.MenuUsername)
 
-            if (user.profilePic == null) {
+            if (user.profilePicURL.isEmpty()) {
                 profilePic.setImageResource(R.drawable.placeholder_profilepic)
             } else {
-                profilePic.load(user.profilePic.url)
+                profilePic.load(user.profilePicURL)
             }
 
             username.text = user.username

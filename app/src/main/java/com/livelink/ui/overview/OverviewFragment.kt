@@ -32,11 +32,6 @@ class OverviewFragment : Fragment() {
         if (viewModel.currentUser.value == null) {
             findNavController().navigate(R.id.loginFragment)
         }
-
-        requireActivity().title = "Übersicht"
-
-        /*viewModel.userData.observe(viewLifecycleOwner) {
-            Log.d("UserData", it.toString())
-        }*/
     }
+
 }

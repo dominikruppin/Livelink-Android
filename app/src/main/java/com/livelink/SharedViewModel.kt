@@ -144,9 +144,8 @@ class SharedViewModel: ViewModel() {
             imageRef.downloadUrl.addOnSuccessListener {
                 val imageUrl = it.toString()
                 Log.d("ProfilePicUrl", imageUrl)
-                userDataDocumentReference?.update("profilePic" , imageUrl)
+                userDataDocumentReference?.update("profilePicURL" , imageUrl)
             }
         }
     }
-
 }

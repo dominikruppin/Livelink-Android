@@ -26,8 +26,13 @@
         android:label="fragment_channels"
         tools:layout="@layout/fragment_channels" />
     <fragment
-        android:id="@+id/editProfilFragment"
-        android:name="com.livelink.ui.editprofil.EditProfilFragment"
-        android:label="fragment_editprofil"
-        tools:layout="@layout/fragment_editprofil" />
+        android:id="@+id/passwordResetFragment"
+        android:name="com.livelink.ui.passwordreset.PasswordResetFragment"
+        android:label="PasswordResetFragment"
+        tools:layout="@layout/fragment_password_reset"/>
+    <fragment
+        android:id="@+id/editProfileFragment"
+        android:name="com.livelink.ui.profile.EditProfileFragment"
+        android:label="fragment_editprofile"
+        tools:layout="@layout/fragment_editprofile" />
 </navigation>

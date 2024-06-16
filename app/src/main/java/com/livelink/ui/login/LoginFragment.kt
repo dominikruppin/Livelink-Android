@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.livelink.R
@@ -34,9 +33,12 @@ class LoginFragment : Fragment() {
 
         var isUsernameOk = false
 
+        binding.ForgotPasswordLink.setOnClickListener {
+            findNavController().navigate(R.id.passwordResetFragment)
+        }
+
         binding.LoginToRegisterLink.setOnClickListener {
             findNavController().navigate(R.id.registerFragment)
-            Log.d("Fragment", "Wir navigieren zum RegisterFragment")
         }
 
         binding.LoginUsernameEditText.addTextChangedListener(object : TextWatcher {
@@ -62,18 +64,13 @@ class LoginFragment : Fragment() {
         binding.LoginButton.setOnClickListener {
             Log.d("Login", "Loginbutton geklickt")
             if (isUsernameOk) {
-                Log.d("Login", "Username OK, Starte Loginvorgang..")
                 val username = binding.LoginUsernameEditText.text.toString().trim()
-                Log.d("Login", "Username: $username")
                 val password = binding.LoginPasswordEditText.text.toString()
-                Log.d("Login", "Passwort: $password")
 
                 viewModel.getMailFromUsername(username) { email ->
-                    Log.d("Login", "Gefundene Email: $email")
                     if (email != null) {
                         viewModel.login(email, password) { success ->
                             if (success) {
-                                Log.d("Login", "Login successLogin")
                                 findNavController().navigate(R.id.overviewFragment)
                             } else {
                                 Toast.makeText(
@@ -91,7 +88,6 @@ class LoginFragment : Fragment() {
                         ).show()
                     }
                 }
-
             }
         }
     }

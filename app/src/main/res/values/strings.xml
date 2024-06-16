@@ -22,4 +22,12 @@
     <string name="logout">Ausloggen</string>
     <string name="channel">Channels</string>
     <string name="profiledit">Profil bearbeiten</string>
+    <string name="forgotpasswordButton">Passwort zurücksetzen</string>
+    <string name="login_link">Zum Login</string>
+    <string name="name">Name</string>
+    <string name="age">Alter</string>
+    <string name="birthday">Geburtstag</string>
+    <string name="gender">Geschlecht</string>
+    <string name="relationship_status">Beziehungsstatus</string>
+    <string name="save">Speichern</string>
 </resources>
