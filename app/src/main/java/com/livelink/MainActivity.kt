@@ -31,15 +31,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: SharedViewModel by viewModels()
 
-    private val getContent =
-        registerForActivityResult(
-            ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-            uri?.let {
-                viewModel.uploadProfilePicture(it)
-            }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
@@ -95,14 +86,6 @@ class MainActivity : AppCompatActivity() {
 
             username.text = user.username
         }
-
-        profilePic.setOnClickListener {
-            getContent.launch("image/*")
-        }
-
-
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
