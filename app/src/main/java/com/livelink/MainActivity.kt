@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         viewModel.userData.observe(this) { user ->
-            Log.d("UserData", user.toString())
+            Log.d("User", user.toString())
             val username = headerBinding.findViewById<TextView>(R.id.MenuUsername)
 
             if (user.profilePicURL.isEmpty()) {
@@ -86,6 +86,12 @@ class MainActivity : AppCompatActivity() {
 
             username.text = user.username
         }
+
+        viewModel.zipCodeInfos.observe(this) {
+            Log.d("UserData", "Infos zur PLZ: $it")
+        }
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

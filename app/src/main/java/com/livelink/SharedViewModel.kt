@@ -9,20 +9,25 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
+import com.livelink.data.Repository
 import com.livelink.data.UserData
+import com.livelink.data.remote.ZipCodeApi
+import kotlinx.coroutines.launch
 
 class SharedViewModel: ViewModel() {
     val auth = FirebaseAuth.getInstance()
     // val chatDatabase = FirebaseDatabase.getInstance()
-    val database = FirebaseFirestore.getInstance()
-    val usersCollectionReference = database.collection("users")
-    val storage = FirebaseStorage.getInstance()
+    private val database = FirebaseFirestore.getInstance()
+    private val usersCollectionReference = database.collection("users")
+    private val storage = FirebaseStorage.getInstance()
+    private val repository = Repository(ZipCodeApi)
 
     private val _currentUser = MutableLiveData<FirebaseUser?>(auth.currentUser)
     val currentUser : LiveData<FirebaseUser?>
@@ -32,6 +37,8 @@ class SharedViewModel: ViewModel() {
     val userData: LiveData<UserData>
         get() = _userData
 
+    val zipCodeInfos = repository.zipInfos
+
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
 
@@ -40,8 +47,12 @@ class SharedViewModel: ViewModel() {
     }
 
     fun setupUserEnv() {
-        _currentUser.postValue(auth.currentUser)
+        Log.d("User", "setupUserEnv aufgerufen")
+        Log.d("User", "aktueller user: ${currentUser.value}")
+        _currentUser.value = auth.currentUser
+        Log.d("User", "Neuer User: ${currentUser.value}")
         if (currentUser.value != null) {
+            Log.d("User", "User is not null, laden der Daten")
             userDataDocumentReference = usersCollectionReference.document(currentUser.value!!.uid)
             startUserDataListener()
         } else {
@@ -69,6 +80,17 @@ class SharedViewModel: ViewModel() {
         }
     }
 
+    fun updateUserData(updates: Map<String, Any>, callback: (Boolean) -> Unit) {
+        userDataDocumentReference?.update(updates)?.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                callback(true)
+            } else {
+                callback(false)
+            }
+        }
+    }
+
+
     fun register(username: String, email: String, password: String, callback: (Boolean) -> Unit) {
         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -78,8 +100,7 @@ class SharedViewModel: ViewModel() {
                     usersCollectionReference.document(it.uid).set(userData)
                         .addOnCompleteListener { setTask ->
                             if (setTask.isSuccessful) {
-                                _currentUser.postValue(user)
-                                callback(true) // Erfolg der Registrierung
+                                callback(true) // Erfolgreiche der Registrierung
                             } else {
                                 callback(false) // Fehler beim Speichern der Benutzerdaten
                             }
@@ -116,8 +137,8 @@ class SharedViewModel: ViewModel() {
     fun login(email: String, password: String, callback: (Boolean) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
-                setupUserEnv()
                 callback(true)
+                setupUserEnv()
             }
             .addOnFailureListener {
                 callback(false)
@@ -139,13 +160,18 @@ class SharedViewModel: ViewModel() {
 
         val uploadTask = imageRef.putFile(uri)
 
-        // Ausführen des UploadTasks
         uploadTask.addOnCompleteListener {
             imageRef.downloadUrl.addOnSuccessListener {
                 val imageUrl = it.toString()
                 Log.d("ProfilePicUrl", imageUrl)
                 userDataDocumentReference?.update("profilePicURL" , imageUrl)
             }
+        }
+    }
+
+    fun loadZipInfos(country: String, zipcode: String) {
+        viewModelScope.launch {
+            repository.loadZipInfos(country, zipcode)
         }
     }
 }

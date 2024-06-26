@@ -10,6 +10,8 @@ data class UserData(
     val birthday: String = "",
     val gender: String = "",
     val relationshipStatus: String = "",
-    val plz: Int = 0,
+    val zipCode: String = "",
+    val country: String = "",
+    val state: String = "",
     val city: String = ""
 )

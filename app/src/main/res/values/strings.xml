@@ -33,17 +33,20 @@
     <string name="zip_code">Postleitzahl</string>
     <string name="country">Land</string>
     <string-array name="gender_options">
+            <item>Keine Angabe</item>
             <item>Männlich</item>
             <item>Weiblich</item>
             <item>Divers</item>
         </string-array>
     <string-array name="relationship_status_options">
+            <item>Keine Angabe</item>
             <item>Ledig</item>
             <item>Verheiratet</item>
             <item>Geschieden</item>
             <item>Verwitwet</item>
         </string-array>
     <string-array name="country_options">
+            <item>Keine Angabe</item>
             <item>Deutschland</item>
             <item>Österreich</item>
             <item>Schweiz</item>
