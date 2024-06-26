@@ -161,7 +161,7 @@ class EditProfileFragment : Fragment() {
                             Toast.LENGTH_LONG
                         ).show()
                     }
-                    //viewModel.clearZipInfos()
+                    viewModel.clearZipInfos()
                 }
             } else {
                 updates["zipCode"] = ""

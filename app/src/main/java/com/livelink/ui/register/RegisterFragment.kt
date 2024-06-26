@@ -133,12 +133,13 @@ class RegisterFragment : Fragment() {
 
                 viewModel.register(username, email, password) { success ->
                     if (success) {
+                        viewModel.setupUserEnv()
                         Toast.makeText(
                             requireContext(),
                             "Registrierung erfolgreich.",
                             Toast.LENGTH_LONG
                         ).show()
-                        findNavController().navigate(R.id.loginFragment)
+                        findNavController().navigate(R.id.overviewFragment)
                     } else {
                         Toast.makeText(
                             requireContext(),

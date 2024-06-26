@@ -21,4 +21,8 @@ class Repository(val api: ZipCodeApi) {
             Log.d("UserData", "Scheiße, API Call lief schief: $e")
         }
     }
+
+    fun clearZipInfos() {
+        _zipInfos.value = null
+    }
 }

@@ -2,6 +2,7 @@ package com.livelink.data
 
 data class UserData(
     val username: String = "",
+    val usernameLowercase: String = "",
     val email: String = "",
     val profilePicURL: String = "",
     val status: Int = 0,

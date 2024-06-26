@@ -95,7 +95,7 @@ class SharedViewModel: ViewModel() {
         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val user = auth.currentUser
-                val userData = UserData(username = username, email = email)
+                val userData = UserData(username = username, usernameLowercase = username.lowercase(), email = email)
                 user?.let {
                     usersCollectionReference.document(it.uid).set(userData)
                         .addOnCompleteListener { setTask ->
@@ -113,7 +113,8 @@ class SharedViewModel: ViewModel() {
     }
 
     fun isUsernameTaken(username: String, callback: (Boolean) -> Unit) {
-        usersCollectionReference.whereEqualTo("username", username).get()
+        val lowercaseUsername = username.lowercase()
+        usersCollectionReference.whereEqualTo("username", lowercaseUsername).get()
             .addOnSuccessListener { documents ->
                 callback(!documents.isEmpty)
             }
@@ -123,7 +124,8 @@ class SharedViewModel: ViewModel() {
     }
 
     fun getMailFromUsername(username: String, callback: (String?) -> Unit) {
-        usersCollectionReference.whereEqualTo("username", username).get()
+        val lowercaseUsername = username.lowercase()
+        usersCollectionReference.whereEqualTo("usernameLowercase", lowercaseUsername).get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     val email = documents.documents[0].getString("email")
@@ -173,5 +175,9 @@ class SharedViewModel: ViewModel() {
         viewModelScope.launch {
             repository.loadZipInfos(country, zipcode)
         }
+    }
+
+    fun clearZipInfos() {
+        repository.clearZipInfos()
     }
 }
