@@ -18,6 +18,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import com.livelink.data.Repository
 import com.livelink.data.UserData
+import com.livelink.data.model.ZipCodeInfos
 import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
 
@@ -171,13 +172,10 @@ class SharedViewModel: ViewModel() {
         }
     }
 
-    fun loadZipInfos(country: String, zipcode: String) {
+    fun loadZipInfos(countryCode: String, zipCode: String) {
         viewModelScope.launch {
-            repository.loadZipInfos(country, zipcode)
+            repository.loadZipInfos(countryCode, zipCode)
         }
     }
 
-    fun clearZipInfos() {
-        repository.clearZipInfos()
-    }
 }

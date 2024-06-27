@@ -19,6 +19,7 @@ class Repository(val api: ZipCodeApi) {
             _zipInfos.postValue(api.apiService.getZipInfos(country, zipcode).firstOrNull())
         } catch (e: Exception) {
             Log.d("UserData", "Scheiße, API Call lief schief: $e")
+            _zipInfos.postValue(null)
         }
     }
 
