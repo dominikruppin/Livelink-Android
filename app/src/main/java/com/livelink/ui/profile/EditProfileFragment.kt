@@ -10,11 +10,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import android.app.DatePickerDialog
 import android.util.Log
+import android.widget.AdapterView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import coil.load
 import com.livelink.R
 import com.livelink.SharedViewModel
-import com.livelink.data.model.ZipCodeInfos
 import com.livelink.databinding.FragmentEditprofileBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,24 +46,30 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
     viewModel.userData.observe(viewLifecycleOwner) { user ->
-        binding.apply {
-            ProfileImageView.load(user.profilePicURL) {
+            Log.d("UserData", "UserData Observer getriggert. $user")
+            binding.ProfileImageView.load(user.profilePicURL) {
                 placeholder(R.drawable.placeholder_profilepic)
                 error(R.drawable.placeholder_profilepic)
             }
 
-            EditNameEditText.setText(user.name)
-            EditAgeEditText.setText(user.age.toString())
-            EditBirthdayEditText.setText(user.birthday)
-            EditZipCodeEditText.setText(user.zipCode)
+            if (user.country.isEmpty() || user.country == "Keine Angabe") {
+                binding.EditZipCodeInputLayout.isVisible = false
+            } else {
+                binding.EditZipCodeInputLayout.isVisible = true
+            }
+
+            binding.EditNameEditText.setText(user.name)
+            binding.EditAgeEditText.setText(user.age)
+            binding.EditBirthdayEditText.setText(user.birthday)
+            binding.EditZipCodeEditText.setText(user.zipCode)
 
             val genderOptions = resources.getStringArray(R.array.gender_options)
             if (user.gender.isNotEmpty()) {
                 val defaultIndex = genderOptions.indexOf(user.gender)
-                EditGenderSpinner.setSelection(defaultIndex)
-                EditGenderSpinner.isClickable = false
+                binding.EditGenderSpinner.setSelection(defaultIndex)
+                binding.EditGenderSpinner.isClickable = false
             } else {
-                EditGenderSpinner.isClickable = true
+                binding.EditGenderSpinner.isClickable = true
             }
 
             val relationShipOptions =
@@ -75,15 +82,30 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             val selectedCountry = countryOptions.indexOf(user.country)
             binding.EditCountrySpinner.setSelection(selectedCountry)
 
-            ProfileImageView.setOnClickListener {
+            binding.ProfileImageView.setOnClickListener {
                 getContent.launch("image/*")
             }
 
-            EditBirthdayEditText.setOnClickListener {
+            binding.EditBirthdayEditText.setOnClickListener {
                 showDatePickerDialog()
             }
+
+        binding.EditCountrySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                val selectedCountry = parent.getItemAtPosition(position).toString()
+                if (selectedCountry.isNotEmpty() && selectedCountry != "Keine Angabe") {
+                    binding.EditZipCodeInputLayout.isVisible = true
+                } else {
+                    binding.EditZipCodeInputLayout.isVisible = false
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>) {
+                binding.EditZipCodeInputLayout.isVisible = false
+            }
         }
-    }
+        }
+
 
     binding.SaveEditProfileButton.setOnClickListener {
         val name = binding.EditNameEditText.text.toString()
@@ -95,13 +117,19 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val isValidName = name.matches(Regex("^[a-zA-ZäöüÄÖÜß ]{1,24}$")) || name.isEmpty()
         val isValidAge = age.isEmpty() || age.toInt() in 16..100
-        val isValidBirthday = true // TODO: Implement birthday validation
-        val isValidZipCodeFormat = when (country) {
-            "Deutschland" -> zipCode.matches(Regex("^[0-9]{5}$"))
-            "Österreich" -> zipCode.matches(Regex("^[0-9]{4}$"))
-            "Schweiz" -> zipCode.matches(Regex("^[0-9]{4}$"))
-            else -> false
-        } || zipCode.isEmpty()
+        val isValidBirthday = true // TODO: Geburtstags Logik implementieren
+
+        val isValidZipCodeFormat = if (country.isNotEmpty() && country != "Keine Angabe") {
+            when (country) {
+                "Deutschland" -> zipCode.matches(Regex("^[0-9]{5}$"))
+                "Österreich" -> zipCode.matches(Regex("^[0-9]{4}$"))
+                "Schweiz" -> zipCode.matches(Regex("^[0-9]{4}$"))
+                else -> false
+            } || zipCode.isEmpty()
+        } else {
+            true
+        }
+
 
         binding.EditNameEditText.error = if (isValidName) null else "Ungültiger Name"
         binding.EditAgeEditText.error = if (isValidAge) null else "Ungültiges Alter"
@@ -112,10 +140,8 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             return@setOnClickListener
         }
 
-        // Clear previous errors
         binding.EditZipCodeEditText.error = null
 
-        // Only load zip code information if necessary
         if (zipCode.isNotEmpty() && country.isNotEmpty() && country != "Keine Angabe") {
             val countryCode = when (country) {
                 "Deutschland" -> "de"
@@ -125,7 +151,6 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             }
             viewModel.loadZipInfos(countryCode, zipCode)
         } else {
-            // No zip code or country specified, update other user data only
             val updates = mutableMapOf<String, Any>()
             if (name != viewModel.userData.value?.name) {
                 updates["name"] = name
@@ -147,19 +172,17 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
                 updates["gender"] = selectedGender
             }
 
-            // Save the user data
             saveUserData(updates)
         }
     }
 
-    // Observer for zip code information
     viewModel.zipCodeInfos.observe(viewLifecycleOwner) { zipInfo ->
         if (zipInfo == null) {
             binding.EditZipCodeEditText.error = "Ungültige Postleitzahl"
             Toast.makeText(requireContext(), "Nicht gespeichert.", Toast.LENGTH_LONG).show()
         } else {
             val updates = mutableMapOf<String, Any>()
-            // Process valid zip code info
+
             if (zipInfo.postalCode != viewModel.userData.value?.zipCode) {
                 updates["zipCode"] = zipInfo.postalCode
                 updates["city"] = zipInfo.name
@@ -168,7 +191,6 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
                 }
             }
 
-            // Update other user data if necessary
             val name = binding.EditNameEditText.text.toString()
             val age = binding.EditAgeEditText.text.toString()
             val birthday = binding.EditBirthdayEditText.text.toString()
@@ -195,7 +217,6 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
                 updates["gender"] = selectedGender
             }
 
-            // Save the user data
             saveUserData(updates)
         }
     }
@@ -222,10 +243,11 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val month = calendar.get(Calendar.MONTH)
         val day = calendar.get(Calendar.DAY_OF_MONTH)
         val existingDate = binding.EditBirthdayEditText.text?.toString()
-        val dateParts = existingDate?.split(".")
-        val existingYear = dateParts?.get(2)?.toIntOrNull()
-        val existingMonth = (dateParts?.get(1)?.toIntOrNull() ?: month) - 1
-        val existingDay = dateParts?.get(0)?.toIntOrNull()
+
+        val dateParts = existingDate?.split(".") ?: listOf(null, null, null)
+        val existingYear = dateParts.getOrNull(2)?.toIntOrNull()
+        val existingMonth = (dateParts.getOrNull(1)?.toIntOrNull() ?: month) - 1
+        val existingDay = dateParts.getOrNull(0)?.toIntOrNull()
 
         val datePickerDialog = DatePickerDialog(
             requireContext(),
