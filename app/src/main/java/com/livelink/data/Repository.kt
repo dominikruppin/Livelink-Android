@@ -23,6 +23,6 @@ class Repository(val api: ZipCodeApi) {
     }
 
     fun clearZipInfos() {
-        _zipInfos.value = null
+        _zipInfos.postValue(null)
     }
 }

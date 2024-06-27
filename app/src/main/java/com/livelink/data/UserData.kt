@@ -7,7 +7,7 @@ data class UserData(
     val profilePicURL: String = "",
     val status: Int = 0,
     val name: String = "",
-    val age: Int = 0,
+    val age: String = "",
     val birthday: String = "",
     val gender: String = "",
     val relationshipStatus: String = "",

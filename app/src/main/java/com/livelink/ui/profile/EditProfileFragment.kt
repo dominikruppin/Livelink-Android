@@ -13,11 +13,14 @@ import android.health.connect.datatypes.units.Length
 import android.util.Log
 import android.widget.DatePicker
 import android.widget.Toast
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
 import java.util.*
 import coil.load
 import com.livelink.R
 import com.livelink.SharedViewModel
 import com.livelink.data.UserData
+import com.livelink.data.model.ZipCodeInfos
 import com.livelink.databinding.FragmentEditprofileBinding
 import java.text.SimpleDateFormat
 
@@ -94,7 +97,7 @@ class EditProfileFragment : Fragment() {
 
     private fun saveProfile() {
         val name = binding.EditNameEditText.text.toString()
-        val age = binding.EditAgeEditText.text.toString().toIntOrNull()
+        val age = binding.EditAgeEditText.text.toString()
         val birthday = binding.EditBirthdayEditText.text.toString()
         val zipCode = binding.EditZipCodeEditText.text.toString()
         val relationshipStatus =
@@ -102,7 +105,7 @@ class EditProfileFragment : Fragment() {
         val country = binding.EditCountrySpinner.selectedItem.toString()
 
         val isValidName = name.matches(Regex("^[a-zA-ZäöüÄÖÜß ]{1,24}$")) || name.isEmpty()
-        val isValidAge = age != null && age in 16..100
+        val isValidAge = age.isEmpty() || age.toInt() in 16..100
         val isValidBirthday = true // TODO: Geburtstagslogik implementieren
         val isValidZipCode = when (country) {
             "Deutschland" -> zipCode.matches(Regex("^[0-9]{5}$"))
@@ -122,7 +125,7 @@ class EditProfileFragment : Fragment() {
                 updates["name"] = name
             }
             if (age != viewModel.userData.value?.age) {
-                updates["age"] = age!!
+                updates["age"] = age
             }
             if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {
                 updates["relationshipStatus"] = relationshipStatus
@@ -147,12 +150,15 @@ class EditProfileFragment : Fragment() {
                     else -> ""
                 }
                 viewModel.loadZipInfos(countryCode, zipCode)
-                viewModel.zipCodeInfos.observe(viewLifecycleOwner) { zipInfo ->
+                val observer = { zipInfo: ZipCodeInfos? ->
                     if (zipInfo != null) {
+                        binding.EditZipCodeEditText.error = null
                         updates["zipCode"] = zipCode
                         updates["city"] = zipInfo.name
                         updates["state"] = zipInfo.federalState?.name ?: ""
                         saveUserData(updates)
+                        // Observer entfernen
+                        viewModel.zipCodeInfos.removeObservers(viewLifecycleOwner)
                     } else {
                         binding.EditZipCodeEditText.error = "Ungültige Postleitzahl"
                         Toast.makeText(
@@ -160,21 +166,25 @@ class EditProfileFragment : Fragment() {
                             "Ungültige Postleitzahl.",
                             Toast.LENGTH_LONG
                         ).show()
+                        // Observer entfernen
+                        viewModel.zipCodeInfos.removeObservers(viewLifecycleOwner)
                     }
-                    viewModel.clearZipInfos()
                 }
+
+                // Observer hinzufügen
+                viewModel.zipCodeInfos.observe(viewLifecycleOwner, observer)
             } else {
-                updates["zipCode"] = ""
-                updates["city"] = ""
-                updates["state"] = ""
                 saveUserData(updates)
             }
         }
     }
 
+
     private fun saveUserData(updates: Map<String, Any>) {
+        Log.d("UserData", "updates: $updates")
         if (updates.isNotEmpty()) {
             viewModel.updateUserData(updates) { success ->
+                viewModel.clearZipInfos()
                 val message =
                     if (success) "Erfolgreich gespeichert." else "Fehler beim Speichern."
                 Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
@@ -239,6 +249,7 @@ class EditProfileFragment : Fragment() {
         datePickerDialog.show()
     }
 }
+
 
 
 
