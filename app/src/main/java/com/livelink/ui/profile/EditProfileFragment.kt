@@ -130,7 +130,6 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             true
         }
 
-
         binding.EditNameEditText.error = if (isValidName) null else "Ungültiger Name"
         binding.EditAgeEditText.error = if (isValidAge) null else "Ungültiges Alter"
         binding.EditZipCodeEditText.error =

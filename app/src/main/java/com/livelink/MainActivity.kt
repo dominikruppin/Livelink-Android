@@ -23,6 +23,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import coil.load
 
 class MainActivity : AppCompatActivity() {
@@ -90,7 +91,6 @@ class MainActivity : AppCompatActivity() {
         viewModel.zipCodeInfos.observe(this) {
             Log.d("UserData", "Infos zur PLZ: $it")
         }
-
 
     }
 

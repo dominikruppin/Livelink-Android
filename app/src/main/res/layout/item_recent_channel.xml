@@ -9,7 +9,7 @@
         android:id="@+id/channelIconImageView"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:src="@tools:sample/avatars"
+        android:src="@drawable/placeholder_profilepic"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:contentDescription="Channel Icon" />

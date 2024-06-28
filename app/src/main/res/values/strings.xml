@@ -32,6 +32,7 @@
     <string name="save">Speichern</string>
     <string name="zip_code">Postleitzahl</string>
     <string name="country">Land</string>
+    <string name="greeting">Hallo %s</string>
     <string-array name="gender_options">
             <item>Keine Angabe</item>
             <item>Männlich</item>

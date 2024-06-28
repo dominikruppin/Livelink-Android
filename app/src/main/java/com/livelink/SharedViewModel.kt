@@ -115,7 +115,7 @@ class SharedViewModel: ViewModel() {
 
     fun isUsernameTaken(username: String, callback: (Boolean) -> Unit) {
         val lowercaseUsername = username.lowercase()
-        usersCollectionReference.whereEqualTo("username", lowercaseUsername).get()
+        usersCollectionReference.whereEqualTo("usernameLowercase", lowercaseUsername).get()
             .addOnSuccessListener { documents ->
                 callback(!documents.isEmpty)
             }

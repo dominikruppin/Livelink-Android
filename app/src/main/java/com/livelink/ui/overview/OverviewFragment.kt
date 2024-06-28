@@ -32,6 +32,10 @@ class OverviewFragment : Fragment() {
         if (viewModel.currentUser.value == null) {
             findNavController().navigate(R.id.loginFragment)
         }
+
+        binding.greetingTextView.text = getString(R.string.greeting, viewModel.userData.value?.name)
+
+
     }
 
 }

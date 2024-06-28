@@ -10,7 +10,7 @@
         android:id="@+id/profileImageView"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:src="@tools:sample/avatars"
+        android:src="@drawable/placeholder_profilepic"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
