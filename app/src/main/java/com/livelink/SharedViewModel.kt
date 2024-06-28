@@ -12,21 +12,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import com.livelink.data.Repository
 import com.livelink.data.UserData
+import com.livelink.data.model.Channel
 import com.livelink.data.model.ZipCodeInfos
 import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
 
 class SharedViewModel: ViewModel() {
     val auth = FirebaseAuth.getInstance()
-    // val chatDatabase = FirebaseDatabase.getInstance()
+    //private val chatDatabase = FirebaseDatabase.getInstance()
+    //private val channelsReference = chatDatabase.getReference("channels")
     private val database = FirebaseFirestore.getInstance()
     private val usersCollectionReference = database.collection("users")
+    private val channelsReference = database.collection("channels")
     private val storage = FirebaseStorage.getInstance()
     private val repository = Repository(ZipCodeApi)
 
@@ -38,6 +45,10 @@ class SharedViewModel: ViewModel() {
     val userData: LiveData<UserData>
         get() = _userData
 
+    private val _channels = MutableLiveData<List<Channel>>()
+    val channels: LiveData<List<Channel>>
+        get() = _channels
+
     val zipCodeInfos = repository.zipInfos
 
     private var userDataDocumentReference: DocumentReference? = null
@@ -45,6 +56,7 @@ class SharedViewModel: ViewModel() {
 
     init {
         setupUserEnv()
+        fetchChannels()
     }
 
     fun setupUserEnv() {
@@ -61,6 +73,27 @@ class SharedViewModel: ViewModel() {
             userDataListener = null
         }
     }
+
+    fun fetchChannels() {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("channels")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val channelList = mutableListOf<Channel>()
+                for (document in querySnapshot.documents) {
+                    val channel = document.toObject(Channel::class.java)
+                    channel?.let {
+                        channelList.add(it)
+                    }
+                }
+                _channels.value = channelList
+                Log.d("Channels", "Fetched channels: $channelList")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Channels", "Error fetching channels", e)
+            }
+    }
+
 
     private fun startUserDataListener() {
         userDataListener?.remove()
@@ -177,5 +210,9 @@ class SharedViewModel: ViewModel() {
             repository.loadZipInfos(countryCode, zipCode)
         }
     }
+
+
+
+
 
 }
