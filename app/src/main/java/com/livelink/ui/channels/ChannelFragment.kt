@@ -34,7 +34,6 @@ class ChannelFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel.currentChannel.observe(viewLifecycleOwner) { channel ->
-            // Hier channelId verwenden, um Nachrichten abzurufen und anzuzeigen
             channel.channelID.let {
                 viewModel.fetchMessages(ChannelJoin(it))
             }
@@ -42,7 +41,9 @@ class ChannelFragment : Fragment() {
 
         viewModel.messages.observe(viewLifecycleOwner) {
             Log.d("Chat", "Nachrichten: $it")
-            val adapter = MessageAdapter(it)
+            val adapter = MessageAdapter(it) {
+                viewModel.openProfile(it)
+            }
             binding.recyclerViewMessages.adapter = adapter
         }
 
@@ -63,28 +64,3 @@ class ChannelFragment : Fragment() {
         }
     }
 }
-
-/*
-    private fun observeMessages() {
-        viewModel.message.observe(viewLifecycleOwner, Observer { messages ->
-            messages?.let {
-                messageAdapter.submitList(it)
-                binding.recyclerViewMessages.smoothScrollToPosition(0)
-            }
-        })
-    }
-
-    private fun sendMessage() {
-        val messageContent = binding.editTextMessage.text.toString().trim()
-        if (messageContent.isNotEmpty()) {
-            val senderId = viewModel.currentUser.value?.uid ?: ""
-            val message = Message(senderId, messageContent, System.currentTimeMillis())
-            viewModel.sendMessage(message)
-            binding.editTextMessage.text.clear()
-        }
-    }
-}
-
-    }
-
-}*/

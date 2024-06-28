@@ -12,8 +12,9 @@ import java.util.Locale
 
 
 class MessageAdapter(
-    private val dataset: List<Message>
-): RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
+    private val dataset: List<Message>,
+    private val onUserClick: (String) -> Unit) :
+    RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     inner class MessageViewHolder(val binding: ItemMessageBinding) :
         RecyclerView.ViewHolder(binding.root)
@@ -35,6 +36,7 @@ class MessageAdapter(
         holder.binding.textViewTimestamp.text = formattedTime
 
         holder.binding.textViewUsername.setOnClickListener {
+            onUserClick(username.text.toString())
             Log.d("Profil", "Du hast das Profil von ${username.text} angeklickt.")
         }
     }

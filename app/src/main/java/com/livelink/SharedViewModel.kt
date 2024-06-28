@@ -60,6 +60,10 @@ class SharedViewModel: ViewModel() {
     val messages: LiveData<List<Message>>
         get() = _messages
 
+    private val _profileUserData = MutableLiveData<UserData?>()
+    val profileUserData: LiveData<UserData?>
+        get() = _profileUserData
+
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
 
@@ -230,6 +234,29 @@ class SharedViewModel: ViewModel() {
                 }
             }
     }
+
+    fun openProfile(username: String) {
+        val lowercaseUsername = username.lowercase()
+        usersCollectionReference.whereEqualTo("usernameLowercase", lowercaseUsername)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val userData = documents.documents[0].toObject(UserData::class.java)
+                    userData?.let {
+                        Log.d("Profile", "Daten von $username geladen: $it")
+                        _profileUserData.postValue(it)
+                    }
+                } else {
+                    Log.d("Profile", "Benutzerdaten für $username nicht gefunden.")
+                    _profileUserData.postValue(null)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("Profile", "Fehler beim Abrufen der Benutzerdaten für $username", exception)
+                _profileUserData.postValue(null)
+            }
+    }
+
 
     fun login(email: String, password: String, callback: (Boolean) -> Unit) {
         auth.signInWithEmailAndPassword(email, password)
