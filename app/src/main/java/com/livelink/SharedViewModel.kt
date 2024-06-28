@@ -19,18 +19,19 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import com.livelink.data.Repository
 import com.livelink.data.UserData
 import com.livelink.data.model.Channel
+import com.livelink.data.model.ChannelJoin
+import com.livelink.data.model.Message
 import com.livelink.data.model.ZipCodeInfos
 import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
 
 class SharedViewModel: ViewModel() {
     val auth = FirebaseAuth.getInstance()
-    //private val chatDatabase = FirebaseDatabase.getInstance()
-    //private val channelsReference = chatDatabase.getReference("channels")
     private val database = FirebaseFirestore.getInstance()
     private val usersCollectionReference = database.collection("users")
     private val channelsReference = database.collection("channels")
@@ -50,6 +51,14 @@ class SharedViewModel: ViewModel() {
         get() = _channels
 
     val zipCodeInfos = repository.zipInfos
+
+    private val _currentChannel = MutableLiveData<ChannelJoin>()
+    val currentChannel: LiveData<ChannelJoin>
+        get() = _currentChannel
+
+    private val _messages = MutableLiveData<List<Message>>()
+    val messages: LiveData<List<Message>>
+        get() = _messages
 
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
@@ -74,9 +83,61 @@ class SharedViewModel: ViewModel() {
         }
     }
 
+    fun joinChannel(channel: String) {
+        _currentChannel.value = ChannelJoin(channel)
+    }
+
+    fun sendMessage(message: Message) {
+        val channelId = currentChannel.value?.channelID // Hole die aktuelle Channel ID aus LiveData
+
+        channelId?.let { id ->
+            // Konvertiere Message-Objekt in eine Map
+            val messageData = hashMapOf(
+                "senderId" to message.senderId,
+                "content" to message.content,
+                "timestamp" to message.timestamp
+            )
+
+            // Speichere die Nachricht in der entsprechenden Channel-Nachrichtenkollektion
+            channelsReference.document(id)
+                .collection("messages")
+                .add(messageData)
+                .addOnSuccessListener { documentReference ->
+                    Log.d("Channels", "Message sent with ID: ${documentReference.id}")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Channels", "Error sending message", e)
+                }
+        }
+    }
+
+    fun fetchMessages(channelJoin: ChannelJoin) {
+        // Höre auf Änderungen in der Channel-Nachrichtenkollektion
+        channelsReference.document(channelJoin.channelID)
+            .collection("messages")
+            .whereGreaterThan("timestamp", channelJoin.timestamp) // Nachrichten filtern nach Zeitpunkt
+            .orderBy("timestamp", Query.Direction.DESCENDING) // Sortieren nach Timestamp, absteigend
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("Channels", "Error fetching messages", error)
+                    return@addSnapshotListener
+                }
+
+                val messageList = mutableListOf<Message>()
+                snapshot?.documents?.forEach { doc ->
+                    val message = doc.toObject(Message::class.java)
+                    message?.let {
+                        messageList.add(it)
+                    }
+                }
+
+                _messages.postValue(messageList)
+            }
+    }
+
+
     fun fetchChannels() {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("channels")
+        channelsReference
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val channelList = mutableListOf<Channel>()
@@ -210,9 +271,4 @@ class SharedViewModel: ViewModel() {
             repository.loadZipInfos(countryCode, zipCode)
         }
     }
-
-
-
-
-
 }

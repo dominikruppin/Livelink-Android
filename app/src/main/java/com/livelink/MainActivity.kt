@@ -71,6 +71,10 @@ class MainActivity : AppCompatActivity() {
                     supportActionBar?.show()
                     supportActionBar?.title = "Profil bearbeiten"
                 }
+                R.id.channelFragment -> {
+                    supportActionBar?.show()
+                    supportActionBar?.title = viewModel.currentChannel.value?.channelID
+                }
                 else -> supportActionBar?.hide()
             }
         }

@@ -1,15 +1,16 @@
 package com.livelink.ui.channels
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import com.livelink.R
 import com.livelink.SharedViewModel
-import com.livelink.adapter.ChannelAdapter
+import com.livelink.adapter.ChannelsAdapter
 import com.livelink.databinding.FragmentChannelsBinding
 
 class ChannelsFragment : Fragment() {
@@ -35,7 +36,10 @@ class ChannelsFragment : Fragment() {
             // Liste erstellen aus Pair<String(Kategorie), List<Channel>>(Channels)
             val groupedChannelList = groupedChannels.toList()
             // Adapter mit der Liste erstellen
-            val adapter = ChannelAdapter(groupedChannelList)
+            val adapter = ChannelsAdapter(groupedChannelList) {
+                viewModel.joinChannel(it)
+                findNavController().navigate(R.id.channelFragment)
+            }
             binding.recyclerViewChannel.adapter = adapter
         }
     }

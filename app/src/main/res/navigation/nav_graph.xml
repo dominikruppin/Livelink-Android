@@ -35,4 +35,9 @@
         android:name="com.livelink.ui.profile.EditProfileFragment"
         android:label="fragment_editprofile"
         tools:layout="@layout/fragment_editprofile" />
+    <fragment
+        android:id="@+id/channelFragment"
+        android:name="com.livelink.ui.channels.ChannelFragment"
+        android:label="ChannelFragment"
+        tools:layout="@layout/fragment_channel"/>
 </navigation>
