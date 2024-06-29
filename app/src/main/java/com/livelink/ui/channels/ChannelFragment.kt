@@ -2,19 +2,24 @@ package com.livelink.ui.channels
 
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupWindow
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import coil.load
 import com.livelink.R
 import com.livelink.SharedViewModel
 import com.livelink.adapter.ChannelsAdapter
 import com.livelink.adapter.MessageAdapter
+import com.livelink.data.UserData
 import com.livelink.data.model.ChannelJoin
 import com.livelink.data.model.Message
 import com.livelink.databinding.FragmentChannelBinding
+import com.livelink.databinding.PopupProfileBinding
 
 class ChannelFragment : Fragment() {
 
@@ -53,14 +58,58 @@ class ChannelFragment : Fragment() {
             if (!text.isNullOrEmpty()) {
                 viewModel.sendMessage(
                     viewModel.userData.value.let {
-                            Message(
-                                it!!.username,
-                                binding.editTextMessage.text.toString()
-                            )
+                        Message(
+                            it!!.username,
+                            binding.editTextMessage.text.toString()
+                        )
                     }
                 )
                 binding.editTextMessage.text?.clear()
             }
+        }
+
+        viewModel.profileUserData.observe(viewLifecycleOwner) { userData ->
+            Log.d("Profile", "$userData")
+            userData?.let { showProfilePopup(it) }
+        }
+    }
+
+    private fun showProfilePopup(userData: UserData) {
+        val popupBinding = PopupProfileBinding.inflate(layoutInflater)
+        val popupView = popupBinding.root
+
+
+
+        val popupWindow = PopupWindow(
+            popupView,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        )
+        popupWindow.showAtLocation(binding.root, Gravity.CENTER, 0, 0)
+
+        popupBinding.btnClose.setOnClickListener {
+            popupWindow.dismiss()
+        }
+
+        popupBinding.textViewUsername.text = userData.username
+        if (userData.profilePicURL.isNotEmpty()) {
+            popupBinding.imageViewProfilePic.load(userData.profilePicURL)
+        }
+
+
+
+
+    }
+
+
+
+    private fun getStatusText(status: Int): String {
+        return when (status) {
+            0 -> "Mitglied"
+            6 -> "Admin"
+            11 -> "Sysadmin"
+            else -> "Unbekannter Status"
         }
     }
 }

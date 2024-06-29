@@ -116,11 +116,10 @@ class SharedViewModel: ViewModel() {
     }
 
     fun fetchMessages(channelJoin: ChannelJoin) {
-        // Höre auf Änderungen in der Channel-Nachrichtenkollektion
         channelsReference.document(channelJoin.channelID)
             .collection("messages")
             .whereGreaterThan("timestamp", channelJoin.timestamp) // Nachrichten filtern nach Zeitpunkt
-            .orderBy("timestamp", Query.Direction.DESCENDING) // Sortieren nach Timestamp, absteigend
+            .orderBy("timestamp", Query.Direction.ASCENDING) // Sortieren nach Timestamp, absteigend
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e("Channels", "Error fetching messages", error)
