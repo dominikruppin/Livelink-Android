@@ -11,8 +11,10 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+// URL der openPLZ Api.
 const val BASE_URL = "https://openplzapi.org/"
 
+// Wir loggen die Anfragen und Antworten
 val loggingInterceptor = HttpLoggingInterceptor().also {
     it.level = HttpLoggingInterceptor.Level.BODY
 }
@@ -33,6 +35,9 @@ val retrofit = Retrofit.Builder()
 
 interface ZipCodeApiService {
 
+    // Wir übergeben das Land als kürzel (de, at, ch aktuell) sowie die Postleitzahl.
+    // Als Antwort kriegen wir zu der übergebenden Postleitzahl dann die benötigte Infos.
+    // Gespeichert wird als Liste mit extra modellierter Datenklasse (ZipCodeInfos)
     @GET("{country}/Localities")
     suspend fun getZipInfos(
         @Path("country") country: String,

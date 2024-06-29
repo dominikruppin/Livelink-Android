@@ -1,5 +1,9 @@
 package com.livelink.data
 
+import com.livelink.data.model.Channel
+import com.livelink.data.model.ProfileVisitor
+
+// Datenklasse zum speichern(FireStore) und abrufen der Daten eines Users
 data class UserData(
     val username: String = "",
     val usernameLowercase: String = "",
@@ -14,5 +18,7 @@ data class UserData(
     val zipCode: String = "",
     val country: String = "",
     val state: String = "",
-    val city: String = ""
+    val city: String = "",
+    val lastChannels: List<Channel> = emptyList(),
+    val recentProfileVisitors: List<ProfileVisitor> = emptyList()
 )

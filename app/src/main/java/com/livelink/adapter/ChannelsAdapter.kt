@@ -12,10 +12,10 @@ import coil.load
 
 // Zum Anzeigen der Kategorien und Channel im Channels Fragment
 // Wir übergeben eine Liste aus Strings, welche die Kategorie beinhalten und die Liste der
-// Channel
+// Channel, außerdem definieren wir eine Funktion die aufgerufen wird wenn man einen Channel anklickt
 class ChannelsAdapter(
     private val dataset: List<Pair<String, List<Channel>>>,
-    private val onChannelItemClick: (String) -> Unit) :
+    private val onChannelItemClick: (Channel) -> Unit) :
     RecyclerView.Adapter<ChannelsAdapter.CategoryViewHolder>() {
 
         // ViewHolder für die Kategorien erstellen und das Layout inflaten
@@ -59,8 +59,8 @@ class ChannelsAdapter(
             holder.binding.textViewChannelName.text = item.name
 
             holder.binding.root.setOnClickListener {
-                //Log.d("Channels", "Du hast den Channel ${item.name} ausgewählt.")
-                onChannelItemClick(item.name)
+                Log.d("Channels", "Du hast den Channel ${item.name} ausgewählt.")
+                onChannelItemClick(item)
             }
         }
 
