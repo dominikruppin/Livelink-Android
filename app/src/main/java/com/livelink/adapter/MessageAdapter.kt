@@ -3,6 +3,7 @@ package com.livelink.adapter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.livelink.data.model.Message
 import com.livelink.databinding.ItemMessageBinding
@@ -15,11 +16,11 @@ import java.util.Locale
 // angeklickt wird (Wenn ein Nutzer eine Nachricht sendet, wird sein Nutzername mit dargestellt,
 // dieser ist dann anklickbar)
 class MessageAdapter(
-    private val dataset: List<Message>,
-    private val onUserClick: (String) -> Unit) :
-    RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
+    private var dataset: List<Message>,
+    private val onUserClick: (String) -> Unit
+) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
-        // Erstellen den ViewHolder
+    // Erstellen den ViewHolder
     inner class MessageViewHolder(val binding: ItemMessageBinding) :
         RecyclerView.ViewHolder(binding.root)
 
@@ -54,5 +55,43 @@ class MessageAdapter(
 
     override fun getItemCount(): Int {
         return dataset.size
+    }
+
+    // Damit updaten wir die Nachrichten
+    // Das verhindert, das immer bei einer neuen Nachricht ALLE Nachrichten neu geladen werden
+    // So werden nur die neuen Nachrichten hinzugefügt.
+    // Dafür werden die Unterschiede berechnet
+    fun updateMessages(newMessages: List<Message>) {
+        val diffResult = DiffUtil.calculateDiff(MessagesDiffCallback(dataset, newMessages))
+        dataset = newMessages
+        diffResult.dispatchUpdatesTo(this)
+    }
+
+    // Die Klasse vergleicht die alte und neue Nachrichtenliste, um die Unterschiede zu ermitteln.
+    private class MessagesDiffCallback(
+        private val oldList: List<Message>,
+        private val newList: List<Message>
+    ) : DiffUtil.Callback() {
+
+        // Gibt die größe der alten Liste zurück
+        override fun getOldListSize(): Int {
+            return oldList.size
+        }
+
+        // Gibt die Größe der neuen Liste zurück
+        override fun getNewListSize(): Int {
+            return newList.size
+        }
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            // Vergleicht, ob zwei Nachrichten dieselben sind, basierend auf Zeitstempel und Sender-ID.
+            return oldList[oldItemPosition].timestamp == newList[newItemPosition].timestamp &&
+                    oldList[oldItemPosition].senderId == newList[newItemPosition].senderId
+        }
+
+        // Prüft ob zwei Message Objekte gleich sind
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            return oldList[oldItemPosition] == newList[newItemPosition]
+        }
     }
 }

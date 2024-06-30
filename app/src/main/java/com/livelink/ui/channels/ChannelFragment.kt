@@ -20,6 +20,7 @@ class ChannelFragment : Fragment() {
 
     private lateinit var binding: FragmentChannelBinding
     private val viewModel: SharedViewModel by activityViewModels()
+    private lateinit var adapter: MessageAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +34,12 @@ class ChannelFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Wir binden hier bereits den Adapter, mit einer Funktion um Profile zu öffnen
+        adapter = MessageAdapter(emptyList()) { clickedUser ->
+            viewModel.openProfile(clickedUser)
+        }
+        binding.recyclerViewMessages.adapter = adapter
+
         // Aktuellen Channel abrufen
         viewModel.currentChannel.observe(viewLifecycleOwner) { channel ->
             // Wenn der aktuelle Channel nicht null ist...
@@ -42,17 +49,19 @@ class ChannelFragment : Fragment() {
             }
         }
 
-        // Die Nachrichten des Channels die wir laden landen in der LiveData die wir hier beobachten
+        // Aktuellen Channel abrufen
+        viewModel.currentChannel.observe(viewLifecycleOwner) { channel ->
+            channel.channelID.let {
+                viewModel.fetchMessages(ChannelJoin(it))
+            }
+        }
+
+        // Wir beobachten ob es neue Nachrichten gibt und updaten dann den Adapter
+        // Außerdem scrollen wir immer nach unten, so läuft der Chatverlauf mit
         viewModel.messages.observe(viewLifecycleOwner) { messages ->
             Log.d("Chat", "Nachrichten: $messages")
-            // Wir laden die empfangenen in den Adapter und definieren eine Funktion
-            // falls jemand den Nutzernamen eines Users anklickt
-            val adapter = MessageAdapter(messages) { clickedUser ->
-                // Wurde ein Nutzername angeklickt, öffnen wir das Profil des angeklickten Users
-                viewModel.openProfile(clickedUser)
-            }
-            // Nachrichten an die Recyclerview binden, ergo Nachrichten anzeigen
-            binding.recyclerViewMessages.adapter = adapter
+            adapter.updateMessages(messages)
+            scrollToBottom()
         }
 
         // Button zum senden der Nachricht an den Channel
@@ -89,5 +98,9 @@ class ChannelFragment : Fragment() {
                 binding.editTextMessage.text?.clear()
             }
         }
+    }
+
+    private fun scrollToBottom() {
+        binding.recyclerViewMessages.scrollToPosition(adapter.itemCount - 1)
     }
 }
