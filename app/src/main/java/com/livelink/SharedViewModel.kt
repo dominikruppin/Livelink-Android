@@ -459,12 +459,15 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     // Funktion um nach Nutzern zu suchen
     fun searchUsers(query: String) {
         val queryLowercase = query.lowercase()
+        val queryEnd = queryLowercase + "\uf8ff"
+
         usersCollectionReference.whereGreaterThanOrEqualTo("usernameLowercase", queryLowercase)
-            .whereLessThanOrEqualTo("usernameLowercase", "$queryLowercase\uf8ff")
+            .whereLessThanOrEqualTo("usernameLowercase", queryEnd)
             .get()
             .addOnSuccessListener { documents ->
                 val users = documents.mapNotNull { it.toObject(UserData::class.java) }
-                _searchResults.postValue(users)
+                val filteredUsers = users.filter { it.usernameLowercase.contains(queryLowercase) }
+                _searchResults.postValue(filteredUsers)
             }
             .addOnFailureListener {
                 _searchResults.postValue(emptyList())
