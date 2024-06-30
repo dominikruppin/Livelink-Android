@@ -42,13 +42,13 @@ class OverviewFragment : Fragment() {
         viewModel.userData.observe(viewLifecycleOwner) {
             // Und setzen eine Begrüßung, zusammen mit dem Usernamen des eingeloggten Nutzers
             binding.greetingTextView.text = getString(R.string.greeting, it.username)
-            val lastChannelsAdapter = LastChannelsAdapter(it.lastChannels) { channel ->
+            val lastChannelsAdapter = LastChannelsAdapter(it.lastChannels.reversed()) { channel ->
                 // Wir joinen dem angeklickten Channel..
                 viewModel.joinChannel(channel)
                 // .. und wechseln dafür das Fragment
                 findNavController().navigate(R.id.channelFragment)
             }
-            val lastVisitorsAdapter = LastVisitorsAdapter(it.recentProfileVisitors) { profileVistor ->
+            val lastVisitorsAdapter = LastVisitorsAdapter(it.recentProfileVisitors.reversed()) { profileVistor ->
                 viewModel.openProfile(profileVistor.username)
             }
             // Das übliche binden des Adapters an die recyclerview um die letzten Channel anzuzeigen

@@ -113,7 +113,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     // Funktion um einen Channel zu betreten
     fun joinChannel(channel: Channel) {
         // Setzen den übergebenen Channel als aktuellen Channel in die MutableLiveData
-        _currentChannel.value = ChannelJoin(channel.name)
+        _currentChannel.value = ChannelJoin(channel.name, channel.backgroundUrl)
 
         // Hier fügen wir nun den betretenen Channel in die UserData des
         // eingeloggten Users bei den lastChannels hinzu

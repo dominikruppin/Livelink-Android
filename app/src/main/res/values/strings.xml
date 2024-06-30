@@ -41,10 +41,16 @@
     </string-array>
     <string-array name="relationship_status_options">
         <item>Keine Angabe</item>
-        <item>Ledig</item>
+        <item>Single</item>
+        <item>Auf Wolke7</item>
+        <item>Vergeben</item>
+        <item>Glücklich Vergeben</item>
         <item>Verheiratet</item>
         <item>Geschieden</item>
         <item>Verwitwet</item>
+        <item>On Off</item>
+        <item>Beziehungsunfähig</item>
+        <item>Kann man das Essen?</item>
     </string-array>
     <string-array name="country_options">
         <item>Keine Angabe</item>

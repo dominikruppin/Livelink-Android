@@ -17,12 +17,12 @@ class LastChannelsAdapter(
 ) : RecyclerView.Adapter<LastChannelsAdapter.ChannelViewHolder>() {
 
     // Erstellen des ViewHolder
-    inner class ChannelViewHolder(val binding: ItemRecentChannelBinding) :
+    inner class ChannelViewHolder(val binding: ItemChannelBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     // Binden des Layouts der item_channel.xml
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
-        val binding = ItemRecentChannelBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding = ItemChannelBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ChannelViewHolder(binding)
     }
 
@@ -30,8 +30,8 @@ class LastChannelsAdapter(
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         val item = dataset[position]
 
-        holder.binding.channelNameTextView.text = item.name
-        holder.binding.channelIconImageView.load(item.backgroundUrl)
+        holder.binding.textViewChannelName.text = item.name
+        holder.binding.imageViewChannelImage.load(item.backgroundUrl)
 
         // Wenn ein Channel angeklickt wird..
         holder.binding.root.setOnClickListener {

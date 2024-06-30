@@ -5,5 +5,6 @@ package com.livelink.data.model
 // Sowie den Zeitpunkt wann der Channel betreten wurde als Timestamp
 data class ChannelJoin(
     val channelID: String,
+    val backgroundURL: String,
     val timestamp: Long = System.currentTimeMillis()
 )

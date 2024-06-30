@@ -7,6 +7,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.PopupWindow
@@ -23,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.database.FirebaseDatabase
 import com.livelink.databinding.ActivityMainBinding
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -163,14 +165,23 @@ class MainActivity : AppCompatActivity() {
         val popupBinding = PopupProfileBinding.inflate(LayoutInflater.from(this))
         val popupView = popupBinding.root
 
+        // Margins in dp
+        val marginInDp = 32
+        val scale = resources.displayMetrics.density
+        val marginInPx = (marginInDp * scale + 0.5f).toInt()
+
+        // Berechne die Breite des Popup-Fensters mit Berücksichtigung der Margins
+        val width = resources.displayMetrics.widthPixels - 2 * marginInPx
+
         // Legen die Attribute des Popups fest
         val popupWindow = PopupWindow(
             popupView,
-            ViewGroup.LayoutParams.MATCH_PARENT,
+            width,
             ViewGroup.LayoutParams.WRAP_CONTENT,
             true
         )
-        // Insbesondere die Position auf dem Bidlschirm. In dem Fall mittig
+
+        // Insbesondere die Position auf dem Bildschirm. In dem Fall mittig
         popupWindow.showAtLocation(binding.root, Gravity.CENTER, 0, 0)
 
         // Wenn man den Button zum schließen des Popups anklickt..
@@ -184,6 +195,75 @@ class MainActivity : AppCompatActivity() {
         if (userData.profilePicURL.isNotEmpty()) {
             popupBinding.imageViewProfilePic.load(userData.profilePicURL)
         }
+
+        popupBinding.textViewStatus.text = getUserStatus(userData.status)
+
+        if (userData.name.isNotEmpty()) {
+            popupBinding.textViewName.isVisible = true
+            popupBinding.textViewName.text = userData.name
+        } else {
+            popupBinding.textViewName.isVisible = false
+        }
+
+        val gender = userData.gender
+        if (gender.isNotEmpty() && gender != "Keine Angabe") {
+            popupBinding.textViewGender.isVisible = true
+            popupBinding.textViewGender.text = gender
+        } else {
+            popupBinding.textViewGender.isVisible = false
+        }
+
+        val age = userData.age
+        if (age.isNotEmpty() && age != "0") {
+            popupBinding.textViewAge.isVisible = true
+            popupBinding.textViewAge.text = age
+        } else {
+            popupBinding.textViewAge.isVisible = false
+        }
+
+        if (userData.birthday.isNotEmpty()) {
+            popupBinding.textViewBirthday.isVisible = true
+            popupBinding.textViewBirthday.text = userData.birthday
+        } else {
+            popupBinding.textViewBirthday.isVisible = false
+        }
+
+        val relationshipStatus = userData.relationshipStatus
+        if (relationshipStatus.isNotEmpty() && relationshipStatus != "Keine Angabe") {
+            popupBinding.textViewRelationshipStatus.isVisible = true
+            popupBinding.textViewRelationshipStatus.text = relationshipStatus
+        } else {
+            popupBinding.textViewRelationshipStatus.isVisible = true
+        }
+
+        if (userData.zipCode.isNotEmpty()) {
+            popupBinding.textViewZip.isVisible = true
+            popupBinding.textViewZip.text = userData.zipCode
+        } else {
+            popupBinding.textViewZip.isVisible = false
+        }
+
+        val country = userData.country
+        if (country.isNotEmpty() && country != "Keine Angabe") {
+            popupBinding.textViewCountry.isVisible = true
+            popupBinding.textViewCountry.text = country
+        } else {
+            popupBinding.textViewCountry.isVisible = false
+        }
+
+        if (userData.state.isNotEmpty()) {
+            popupBinding.textViewState.isVisible = true
+            popupBinding.textViewState.text = userData.state
+        } else {
+            popupBinding.textViewState.isVisible = false
+        }
+
+        if (userData.city.isNotEmpty()) {
+            popupBinding.textViewCity.isVisible = true
+            popupBinding.textViewCity.text = userData.city
+        } else {
+            popupBinding.textViewCity.isVisible = false
+        }
     }
 
     // Erstellen des Optionsmenüs in der Action Bar
@@ -191,11 +271,6 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
-    /*
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-    }*/
 
     // Anpassen der zurück Navigation
     override fun onSupportNavigateUp(): Boolean {

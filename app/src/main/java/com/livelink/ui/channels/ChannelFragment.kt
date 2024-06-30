@@ -7,11 +7,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.livelink.SharedViewModel
 import com.livelink.adapter.MessageAdapter
 import com.livelink.data.model.ChannelJoin
 import com.livelink.data.model.Message
 import com.livelink.databinding.FragmentChannelBinding
+import coil.load
+import coil.imageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import kotlinx.coroutines.launch
+
 
 // Fragment welches die Nachrichten des aktuellen Channels anzeigt, außerdem ein Eingabefeld und Button um
 // Nachrichten an den aktuellen Channel zu senden
@@ -45,14 +52,11 @@ class ChannelFragment : Fragment() {
             // Wenn der aktuelle Channel nicht null ist...
             channel.channelID.let {
                 // .. starten wir das abrufen der Nachrichten des Channels
-                viewModel.fetchMessages(ChannelJoin(it))
-            }
-        }
-
-        // Aktuellen Channel abrufen
-        viewModel.currentChannel.observe(viewLifecycleOwner) { channel ->
-            channel.channelID.let {
-                viewModel.fetchMessages(ChannelJoin(it))
+                viewModel.fetchMessages(channel)
+                val backgroundUrl = channel.backgroundURL
+                if (backgroundUrl.isNotEmpty()) {
+                    binding.imageViewChannelBackground.load(channel.backgroundURL)
+                }
             }
         }
 
