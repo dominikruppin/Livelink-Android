@@ -1,7 +1,6 @@
 package com.livelink.ui.overview
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +9,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.livelink.R
 import com.livelink.SharedViewModel
+import com.livelink.adapter.LastChannelsAdapter
+import com.livelink.adapter.LastVisitorsAdapter
 import com.livelink.databinding.FragmentOverviewBinding
 
 // Fragment für die Hauptseite der App (nur bei aktivem Login)
@@ -41,6 +42,18 @@ class OverviewFragment : Fragment() {
         viewModel.userData.observe(viewLifecycleOwner) {
             // Und setzen eine Begrüßung, zusammen mit dem Usernamen des eingeloggten Nutzers
             binding.greetingTextView.text = getString(R.string.greeting, it.username)
+            val lastChannelsAdapter = LastChannelsAdapter(it.lastChannels) { channel ->
+                // Wir joinen dem angeklickten Channel..
+                viewModel.joinChannel(channel)
+                // .. und wechseln dafür das Fragment
+                findNavController().navigate(R.id.channelFragment)
+            }
+            val lastVisitorsAdapter = LastVisitorsAdapter(it.recentProfileVisitors) { profileVistor ->
+                viewModel.openProfile(profileVistor.username)
+            }
+            // Das übliche binden des Adapters an die recyclerview um die letzten Channel anzuzeigen
+            binding.recentChannelsRecyclerView.adapter = lastChannelsAdapter
+            binding.recentVisitorsRecyclerView.adapter = lastVisitorsAdapter
         }
 
 
