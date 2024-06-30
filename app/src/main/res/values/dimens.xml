@@ -8,4 +8,8 @@
     <!-- Default screen margins, per the Android Design guidelines. -->
     <dimen name="fragment_horizontal_margin">16dp</dimen>
     <dimen name="fragment_vertical_margin">16dp</dimen>
+    <dimen name="card_corner_radius_all">32dp</dimen>
+    <dimen name="card_corner_radius_top">32dp</dimen>
+    <dimen name="card_corner_radius_bottom">32dp</dimen>
+    <dimen name="card_corner_radius_none">0dp</dimen>
 </resources>

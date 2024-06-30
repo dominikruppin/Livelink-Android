@@ -55,6 +55,19 @@
             android:textColor="@android:color/black"/>
     </com.google.android.material.textfield.TextInputLayout>
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/searchResultsRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintTop_toBottomOf="@id/searchInputLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        tools:listitem="@layout/item_user_search_result"
+        tools:itemCount="5"/>
+
     <TextView
         android:id="@+id/recentChannelsLabel"
         android:layout_width="wrap_content"
@@ -62,7 +75,7 @@
         android:text="Letzte Channels"
         android:textSize="18sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/searchInputLayout"
+        app:layout_constraintTop_toBottomOf="@id/searchResultsRecyclerView"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp"
         android:layout_marginStart="16dp" />
@@ -129,7 +142,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-
         android:layout_marginEnd="16dp"
         android:orientation="horizontal"
         android:padding="8dp"

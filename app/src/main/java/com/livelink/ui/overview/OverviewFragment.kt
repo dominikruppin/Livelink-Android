@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -42,19 +43,27 @@ class OverviewFragment : Fragment() {
         }
 
         binding.searchEditText.addTextChangedListener {
+            // Die Eingabe
             val query = it.toString().trim()
-            viewModel.searchUsers(query)
+            // Wenn Text eingegeben ist..
+            if (query.isEmpty()) {
+                binding.searchResultsRecyclerView.isVisible = false
+            } else {
+                viewModel.searchUsers(query)
+                binding.searchResultsRecyclerView.isVisible = true
+            }
         }
 
+        // Laden der Suchergebnisse
         viewModel.searchResults.observe(viewLifecycleOwner) { searchResults ->
             Log.d("Search", "Searchresults: $searchResults")
-            // Aktualisiere die RecyclerView-Adapter mit den Suchergebnissen
-            val searchResultsAdapter = SearchResultsAdapter(searchResults) { user ->
+            // Adapter erstellen mit den Suchergebnissen
+            val searchResultsAdapter = SearchResultsAdapter(requireContext(), searchResults) { user ->
                 // Implementiere die Logik für den Klick auf ein Suchergebnis, z.B. Profil öffnen
                 viewModel.openProfile(user.username)
             }
             // Setze den Adapter für die RecyclerView, die die Suchergebnisse anzeigt
-            //binding.searchResultsRecyclerView.adapter = searchResultsAdapter
+            binding.searchResultsRecyclerView.adapter = searchResultsAdapter
         }
 
         // Wir holen uns hiermit die UserDaten des eingeloggten Nutzers
