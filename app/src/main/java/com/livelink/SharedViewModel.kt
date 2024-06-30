@@ -71,6 +71,11 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     // Getter für die Daten des Users, dessen Profil man aufruft
     val profileUserData: LiveData<UserData?>
         get() = _profileUserData
+    // Speichert die Daten der gesuchten Usernamen
+    private val _searchResults = MutableLiveData<List<UserData>>()
+    // Getter für die Suchergebnisse
+    val searchResults: LiveData<List<UserData>>
+        get() = _searchResults
 
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
@@ -448,6 +453,21 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 Toast.makeText(getApplication(), "Fehler beim Abrufen der Benutzerdaten für $username.", Toast.LENGTH_LONG).show()
                 // Und setzen die LiveData auf null
                 _profileUserData.postValue(null)
+            }
+    }
+
+    // Funktion um nach Nutzern zu suchen
+    fun searchUsers(query: String) {
+        val queryLowercase = query.lowercase()
+        usersCollectionReference.whereGreaterThanOrEqualTo("usernameLowercase", queryLowercase)
+            .whereLessThanOrEqualTo("usernameLowercase", "$queryLowercase\uf8ff")
+            .get()
+            .addOnSuccessListener { documents ->
+                val users = documents.mapNotNull { it.toObject(UserData::class.java) }
+                _searchResults.postValue(users)
+            }
+            .addOnFailureListener {
+                _searchResults.postValue(emptyList())
             }
     }
 

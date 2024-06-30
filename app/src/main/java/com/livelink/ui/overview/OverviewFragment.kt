@@ -1,9 +1,11 @@
 package com.livelink.ui.overview
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -11,6 +13,7 @@ import com.livelink.R
 import com.livelink.SharedViewModel
 import com.livelink.adapter.LastChannelsAdapter
 import com.livelink.adapter.LastVisitorsAdapter
+import com.livelink.adapter.SearchResultsAdapter
 import com.livelink.databinding.FragmentOverviewBinding
 
 // Fragment für die Hauptseite der App (nur bei aktivem Login)
@@ -36,6 +39,22 @@ class OverviewFragment : Fragment() {
         // Falls kein Nutzer eingeloggt ist, navigieren wir zum Login
         if (viewModel.currentUser.value == null) {
             findNavController().navigate(R.id.loginFragment)
+        }
+
+        binding.searchEditText.addTextChangedListener {
+            val query = it.toString().trim()
+            viewModel.searchUsers(query)
+        }
+
+        viewModel.searchResults.observe(viewLifecycleOwner) { searchResults ->
+            Log.d("Search", "Searchresults: $searchResults")
+            // Aktualisiere die RecyclerView-Adapter mit den Suchergebnissen
+            val searchResultsAdapter = SearchResultsAdapter(searchResults) { user ->
+                // Implementiere die Logik für den Klick auf ein Suchergebnis, z.B. Profil öffnen
+                viewModel.openProfile(user.username)
+            }
+            // Setze den Adapter für die RecyclerView, die die Suchergebnisse anzeigt
+            //binding.searchResultsRecyclerView.adapter = searchResultsAdapter
         }
 
         // Wir holen uns hiermit die UserDaten des eingeloggten Nutzers
