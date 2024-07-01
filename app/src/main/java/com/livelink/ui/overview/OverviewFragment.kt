@@ -70,12 +70,35 @@ class OverviewFragment : Fragment() {
         viewModel.userData.observe(viewLifecycleOwner) {
             // Und setzen eine Begrüßung, zusammen mit dem Usernamen des eingeloggten Nutzers
             binding.greetingTextView.text = getString(R.string.greeting, it.username)
+            // Prüfen ob der User schon mal Channel besucht hat..
+            if (it.lastChannels.isEmpty()) {
+                // .. falls Nein, blenden wir den Hinweis ein..
+                binding.noRecentChannelsTextView.visibility = View.VISIBLE
+                // Falls ja, blenden wir den Hinweis aus..
+            } else {
+                binding.noRecentChannelsTextView.visibility = View.GONE
+            }
+            // SetOnClickListener für den Channelhinweis, leitet zur Channelauswahl
+            binding.noRecentChannelsTextView.setOnClickListener {
+                findNavController().navigate(R.id.channelsFragment)
+            }
+            // Prüfen ob der User bereits Profilbesucher hatte
+            if (it.recentProfileVisitors.isEmpty()) {
+                // Falls Nein, blenden wir den Hinweis ein...
+                binding.noRecentVisitorsTextView.visibility = View.VISIBLE
+            } else {
+                binding.noRecentVisitorsTextView.visibility = View.GONE
+            }
+            // Liste der letzten Channel an den zugehörigen Adapter geben und Funktion zum anklicken eines
+            // Channels definieren
             val lastChannelsAdapter = LastChannelsAdapter(it.lastChannels.reversed()) { channel ->
                 // Wir joinen dem angeklickten Channel..
                 viewModel.joinChannel(channel)
                 // .. und wechseln dafür das Fragment
                 findNavController().navigate(R.id.channelFragment)
             }
+            // Liste der letzten Profilbesucher an den zugehörigen Adapter geben und Funktion zum anklicken
+            // eines Users definieren
             val lastVisitorsAdapter = LastVisitorsAdapter(it.recentProfileVisitors.reversed()) { profileVistor ->
                 viewModel.openProfile(profileVistor.username)
             }
