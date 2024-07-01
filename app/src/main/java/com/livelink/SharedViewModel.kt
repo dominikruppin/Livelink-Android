@@ -79,6 +79,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
+    private var messageListener: ListenerRegistration? = null
+
 
     // Wird beim erstellen des ViewModels ausgeführt (also appstart)
     init {
@@ -244,13 +246,17 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     // Funktion zum abrufen der Nachrichten eines Channels
     fun fetchMessages(channelJoin: ChannelJoin) {
+        // Zuerst den bestehenden Listener entfernen, falls vorhanden
+        messageListener?.remove()
+
         // Wir nehmen die channelID aus dem übergebenen ChannelJoin-Objekt und holen uns
         // das Dokument mit den Nachrichten
-        channelsReference.document(channelJoin.channelID)
+        Log.d("Chat", "Lade Nachrichten aus ${channelJoin.channelID} von ${channelJoin.timestamp}")
+        messageListener = channelsReference.document(channelJoin.channelID)
             // dort greifen wir auf die Collection mit den Nachrichten zu
             .collection("messages")
             // Wir filtern nach dem timestamp, sodass nur Nachrichten geladen werden,
-            // die seit dem betreten des Channels gesendet worden sind
+            // die seit dem Betreten des Channels gesendet wurden
             .whereGreaterThan("timestamp", channelJoin.timestamp)
             // wir sortieren die Nachrichten nach dem Timestamp aufsteigend
             .orderBy("timestamp", Query.Direction.ASCENDING)
@@ -266,12 +272,13 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 // Erstellen aus den übergebenen Daten die Message-Objekte
                 snapshot?.documents?.forEach { doc ->
                     val message = doc.toObject(Message::class.java)
-                    // Fügen nach dem unwandeln die Message Objekte der Liste hinzu
+                    // Fügen nach dem Umwandeln die Message Objekte der Liste hinzu
                     message?.let {
                         messageList.add(it)
                     }
                 }
                 // Speichern die Liste in der LiveData
+                Log.d("Chat", "Folgende Nachrichten geladen: $messageList")
                 _messages.postValue(messageList)
             }
     }

@@ -49,6 +49,7 @@ class ChannelFragment : Fragment() {
 
         // Aktuellen Channel abrufen
         viewModel.currentChannel.observe(viewLifecycleOwner) { channel ->
+            Log.d("Channel", "Jointime: ${channel.timestamp}")
             // Wenn der aktuelle Channel nicht null ist...
             channel.channelID.let {
                 // .. starten wir das abrufen der Nachrichten des Channels

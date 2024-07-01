@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.livelink.data.model.Message
 import com.livelink.databinding.ItemMessageBinding
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.google.firebase.Timestamp
+import java.util.*
 
 // Zum Anzeigen der Nachrichten innerhalb eines Channels
 // Wir übergeben die Nachrichten als Liste vom Typ Message und eine Funktion falls ein Nutzername
@@ -36,14 +36,14 @@ class MessageAdapter(
     // die er gesendet hat.
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val item = dataset[position]
-        val date = Date(item.timestamp)
+        /*val date = Date(item.timestamp)
         val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-        val formattedTime = dateFormat.format(date)
+        val formattedTime = dateFormat.format(date)*/
         val username = holder.binding.textViewUsername
 
         username.text = item.senderId
         holder.binding.textViewMessage.text = item.content
-        holder.binding.textViewTimestamp.text = formattedTime
+        //holder.binding.textViewTimestamp.text = formattedTime
 
         // Wenn ein Nutzername angeklickt wird..
         holder.binding.textViewUsername.setOnClickListener {
