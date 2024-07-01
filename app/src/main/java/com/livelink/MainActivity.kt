@@ -97,10 +97,22 @@ class MainActivity : AppCompatActivity() {
 
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.overviewFragment -> supportActionBar?.title = "Übersicht"
-                R.id.channelsFragment -> supportActionBar?.title = "Channels"
-                R.id.editProfileFragment -> supportActionBar?.title = "Profil bearbeiten"
-                R.id.channelFragment -> supportActionBar?.title = viewModel.currentChannel.value?.channelID
+                R.id.overviewFragment -> {
+                    supportActionBar?.title = "Übersicht"
+                    supportActionBar?.show()
+                }
+                R.id.channelsFragment -> {
+                    supportActionBar?.title = "Channels"
+                    supportActionBar?.show()
+                }
+                R.id.editProfileFragment -> {
+                    supportActionBar?.title = "Profil bearbeiten"
+                    supportActionBar?.show()
+                }
+                R.id.channelFragment -> {
+                    supportActionBar?.title = viewModel.currentChannel.value?.channelID
+                    supportActionBar?.show()
+                }
                 else -> supportActionBar?.hide()
             }
         }
