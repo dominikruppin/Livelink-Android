@@ -44,11 +44,12 @@ class EditProfileFragment : Fragment() {
         binding = FragmentEditprofileBinding.inflate(inflater, container, false)
         return binding.root
     }
-override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-    super.onViewCreated(view, savedInstanceState)
 
-    // Wir holen uns die Daten des eingeloggten Users
-    viewModel.userData.observe(viewLifecycleOwner) { user ->
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Wir holen uns die Daten des eingeloggten Users
+        viewModel.userData.observe(viewLifecycleOwner) { user ->
             Log.d("UserData", "UserData Observer getriggert. $user")
             // und laden anhand der in den userdata gespeicherten url das Profilbild des Nutzers in die ImageView
             binding.ProfileImageView.load(user.profilePicURL) {
@@ -126,199 +127,220 @@ override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
                 showDatePickerDialog()
             }
 
-        // Wir überwachen ob die Auswahl des Landes geändert wird
-        binding.EditCountrySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-                // Beinhaltet das aktuell gewählte Land
-                val selectedCountry = parent.getItemAtPosition(position).toString()
-                // Prüfen ob ein Land angegeben ist und ob es nicht "Keine Angabe" ist
-                if (selectedCountry.isNotEmpty() && selectedCountry != "Keine Angabe") {
-                    // falls ja, blenden wir das Feld zur Eingabe der Postleitzahl ein
-                    binding.EditZipCodeInputLayout.isVisible = true
-                } else {
-                    // falls nicht, blenden wir das Feld zur Eingabe der Postleitzahl aus
-                    binding.EditZipCodeInputLayout.isVisible = false
+            // Wir überwachen ob die Auswahl des Landes geändert wird
+            binding.EditCountrySpinner.onItemSelectedListener =
+                object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>,
+                        view: View?,
+                        position: Int,
+                        id: Long
+                    ) {
+                        // Beinhaltet das aktuell gewählte Land
+                        val selectedCountry = parent.getItemAtPosition(position).toString()
+                        // Prüfen ob ein Land angegeben ist und ob es nicht "Keine Angabe" ist
+                        if (selectedCountry.isNotEmpty() && selectedCountry != "Keine Angabe") {
+                            // falls ja, blenden wir das Feld zur Eingabe der Postleitzahl ein
+                            binding.EditZipCodeInputLayout.isVisible = true
+                        } else {
+                            // falls nicht, blenden wir das Feld zur Eingabe der Postleitzahl aus
+                            binding.EditZipCodeInputLayout.isVisible = false
+                        }
+                    }
+
+                    // Wenn gar keine Option bei Land ausgewählt ist ..
+                    override fun onNothingSelected(parent: AdapterView<*>) {
+                        // .. blenden wir ebenfalls das Postleitzahlfeld aus
+                        binding.EditZipCodeInputLayout.isVisible = false
+                    }
                 }
-            }
-
-            // Wenn gar keine Option bei Land ausgewählt ist ..
-            override fun onNothingSelected(parent: AdapterView<*>) {
-                // .. blenden wir ebenfalls das Postleitzahlfeld aus
-                binding.EditZipCodeInputLayout.isVisible = false
-            }
-        }
         }
 
-    // Beim klicken auf den Speicher Button..
-    binding.SaveEditProfileButton.setOnClickListener {
-        // .. holen wir uns aus den Eingabefeldern die aktuellen Werte. Zuerst für den Namen..
-        val name = binding.EditNameEditText.text.toString()
-        // .. dann für das Alter ..
-        val age = binding.EditAgeEditText.text.toString()
-        // .. dann für den Geburtstag ..
-        val birthday = binding.EditBirthdayEditText.text.toString()
-        // .. dann für die Postleitzahl ..
-        val zipCode = binding.EditZipCodeEditText.text.toString()
-        // .. dann für den Beziehungsstatus ..
-        val relationshipStatus = binding.EditRelationshipStatusSpinner.selectedItem.toString()
-        // .. dann für das Land ..
-        val country = binding.EditCountrySpinner.selectedItem.toString()
-        // .. dann für das Geschlecht ..
-        val selectedGender = binding.EditGenderSpinner.selectedItem.toString()
-
-        // Wir prüfen ob der Name 1 bis 24 Zeichen hat, nicht leer ist und nur Buchstaben, Zahlen und Leerzeichen enthält
-        // Ergebnis ist ein Boolean
-        val isValidName = name.matches(Regex("^[a-zA-ZäöüÄÖÜß ]{1,24}$")) || name.isEmpty()
-        // Wir prüfen ob das Alter leer ist oder innerhalb der Range von 16 bis 100 Jahren liegt
-        // Ergebnis ist ein Boolean
-        val isValidAge = age.isEmpty() || age.toInt() in 16..100
-        // Ebenfalls ein Boolean, der angibt ob das angebene Geburtsdatum okay ist. Noch nicht implementiert.
-        val isValidBirthday = true // TODO: Geburtstags Logik implementieren
-
-        // Boolean der angibt ob die Postleitzahl formell okay ist. Dazu prüfen wir, ob der Nutzer ein gültiges Land
-        // ausgewählt hat. Falls ja, prüfen wir anhand des Landes ob die eingebene Postleitzahl nur aus Zahlen besteht
-        val isValidZipCodeFormat = if (country.isNotEmpty() && country != "Keine Angabe") {
-            when (country) {
-                // und der richtigen Länge des jeweiligen Landes. In dem Fall wird die Postleitzahl als formell okay angesehen.
-                "Deutschland" -> zipCode.matches(Regex("^[0-9]{5}$"))
-                "Österreich" -> zipCode.matches(Regex("^[0-9]{4}$"))
-                "Schweiz" -> zipCode.matches(Regex("^[0-9]{4}$"))
-                else -> false
-                // Außerdem auch, wenn gar keine Postleitzahl angegeben wurde.
-            } || zipCode.isEmpty()
-            // Wenn kein gültiges Land ausgewählt wurde..
-        } else {
-            // setzen wir den Wert trotzdem auf true, damit gespeichert werden kann (Dann ist die Postleitzahl sowieso
-            // egal, da wir Land + PLZ brauchen zur API Abfrage
-            true
-        }
-
-        // Wir prüfen nun, ob alle formellen Prüfungen okay sind, ansonsten geben wir Fehlermeldungen aus, je nachdem
-        // welche Prüfung fehlschlägt
-        // Hier wird geprüft, ob die formelle Namensprüfung okay ist
-        binding.EditNameEditText.error = if (isValidName) null else "Ungültiger Name"
-        // Hier wird geprüft, ob die formelle Altersprüfung okay ist
-        binding.EditAgeEditText.error = if (isValidAge) null else "Ungültiges Alter"
-        // Hier wird geprüft, ob die formelle Postleitzahlprüfung okay ist
-        binding.EditZipCodeEditText.error =
-            if (isValidZipCodeFormat) null else "Ungültige Postleitzahl"
-
-        // Ist eine der formellen Prüfungen nicht okay, wird die weitere Codeausführung unterbrochen
-        if (!isValidName || !isValidAge || !isValidBirthday || !isValidZipCodeFormat) {
-            return@setOnClickListener
-        }
-
-        // Wenn eine Postleitzahl und ein gültiges Land ausgewählt wurde..
-        // WICHTIG: HIER ERFOLGT EIN API CALL (openPLZ API)
-        if (zipCode.isNotEmpty() && country.isNotEmpty() && country != "Keine Angabe") {
-            // holen wir uns anhand des ausgewählten Landes das Landeskürzel
-            val countryCode = when (country) {
-                "Deutschland" -> "de"
-                "Österreich" -> "at"
-                "Schweiz" -> "ch"
-                else -> ""
-            }
-            // Mit dem Landeskürzel und der angegebenen Postleitzahl, holen wir uns Infos zur Postleitzahl
-            viewModel.loadZipInfos(countryCode, zipCode)
-            // Wenn entweder keine Postleitzahl oder kein gültiges Land vorhanden ist..
-            // WICHTIG: WENN ALSO KEIN API CALL ERFOLGT!!!
-        } else {
-            // erstellen wir eine Map mit den Profilangaben die geändert werden müssen. String ist dabei der Key des
-            // Datenbank/Profilfeldes und der value der jeweilige Wert
-            val updates = mutableMapOf<String, Any>()
-            // Wenn die jeweilige Profilangabe nicht mit der bereits gespeicherten Profileingabe übereinstimmt ..
-            //  // fügen wir den neuen Wert mit Key in die Update Map ein.
-
-            // Wir prüfen wir ob sich der Name geändert hat
-            if (name != viewModel.userData.value?.name) {
-                updates["name"] = name
-            }
-            // Wir prüfen ob sich das Alter geändert hat
-            if (age != viewModel.userData.value?.age) {
-                updates["age"] = age
-            }
-            // Wir überprüfen ob sich der Beziehungsstatus geändert hat
-            if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {
-                updates["relationshipStatus"] = relationshipStatus
-            }
-            // Wir überprüfen ob sich der Geburtstag geändert hat
-            if (birthday != viewModel.userData.value?.birthday) {
-                updates["birthday"] = birthday
-            }
-            // Wir überprüfen ob sich das Land geändert hat
-            if (country != viewModel.userData.value?.country) {
-                updates["country"] = country
-            }
-            // Wir überprüfen ob sich das Geschlecht geändert hat
-            if (selectedGender != viewModel.userData.value?.gender) {
-                updates["gender"] = selectedGender
-            }
-            // Wir übergeben nun die Map mit den Updates an die Profilspeicherfunktion
-            saveUserData(updates)
-        }
-    }
-
-    // Wenn ein API Call (openPLZ API) gestartet wurde, wird das Ergbenis in einer MutableLiveData im ViewModel
-    // gespeichert. Diese beobachten wir, so wissen wir, wann die Ergbenisse da sind und wann wir dann das klicken des
-    // Speicherbuttons weiter verarbeiten können
-    viewModel.zipCodeInfos.observe(viewLifecycleOwner) { zipInfo ->
-        // Wir prüfen ob die erhaltene API Antwort null ist (also eine ungültige Postleitzahl)
-        if (zipInfo == null) {
-            // Falls die Antwort ungültig (null) ist, geben wir Fehlermeldungen aus. Einmal im Postleitzahl Feld
-            binding.EditZipCodeEditText.error = "Ungültige Postleitzahl"
-            // und einmal als Banner Message
-            Toast.makeText(requireContext(), "Nicht gespeichert.", Toast.LENGTH_LONG).show()
-            // Wenn das Ergebnis nicht null ist, wir also gültige Daten zur Postleitzahl erhalten haben..
-        } else {
-            // legen wir wieder eine Map an, mit den Profilangaben die gespeichert werden müssen. String ist wieder der Key
-            // der Datenbank bzw. des Profilfeldes und value der neue Wert
-            val updates = mutableMapOf<String, Any>()
-
-            // Wenn die Daten der API Antwort NICHT den bereits gespeicherten entsprechen
-            if (zipInfo.postalCode != viewModel.userData.value?.zipCode) {
-                // dann fügen wir die übergebene Postleitzahl
-                updates["zipCode"] = zipInfo.postalCode
-                // sowie die übergebene Stadt
-                updates["city"] = zipInfo.name
-                // und falls vorhanden
-                if (zipInfo.federalState != null) {
-                    // das übergebene Bundesland mit in die Update Map ein
-                    updates["state"] = zipInfo.federalState.name
-                }
-            }
-
-            // Ansonsten holen wir uns wieder die angegebenen Werte aus den Eingabefeldern
+        // Beim klicken auf den Speicher Button..
+        binding.SaveEditProfileButton.setOnClickListener {
+            // .. holen wir uns aus den Eingabefeldern die aktuellen Werte. Zuerst für den Namen..
             val name = binding.EditNameEditText.text.toString()
+            // .. dann für das Alter ..
             val age = binding.EditAgeEditText.text.toString()
+            // .. dann für den Geburtstag ..
             val birthday = binding.EditBirthdayEditText.text.toString()
+            // .. dann für die Postleitzahl ..
+            val zipCode = binding.EditZipCodeEditText.text.toString()
+            // .. dann für den Beziehungsstatus ..
             val relationshipStatus = binding.EditRelationshipStatusSpinner.selectedItem.toString()
+            // .. dann für das Land ..
             val country = binding.EditCountrySpinner.selectedItem.toString()
-
-            // Prüfen ob die angegeben Daten sich von den bereits gespeicherten Unterscheiden
-            // Falls ja, fügen wir sie ebenfalls mit in die Update Map ein
-            if (name != viewModel.userData.value?.name) {
-                updates["name"] = name
-            }
-            if (age != viewModel.userData.value?.age) {
-                updates["age"] = age
-            }
-            if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {
-                updates["relationshipStatus"] = relationshipStatus
-            }
-            if (birthday != viewModel.userData.value?.birthday) {
-                updates["birthday"] = birthday
-            }
-            if (country != viewModel.userData.value?.country) {
-                updates["country"] = country
-            }
+            // .. dann für das Geschlecht ..
             val selectedGender = binding.EditGenderSpinner.selectedItem.toString()
-            if (selectedGender != viewModel.userData.value?.gender) {
-                updates["gender"] = selectedGender
+
+            // Wir prüfen ob der Name 1 bis 24 Zeichen hat, nicht leer ist und nur Buchstaben, Zahlen und Leerzeichen enthält
+            // Ergebnis ist ein Boolean
+            val isValidName = name.matches(Regex("^[a-zA-ZäöüÄÖÜß ]{1,24}$")) || name.isEmpty()
+            // Wir prüfen ob das Alter leer ist oder innerhalb der Range von 16 bis 100 Jahren liegt
+            // Ergebnis ist ein Boolean
+            val isValidAge = age.isEmpty() || age.toInt() in 16..100
+            // Ebenfalls ein Boolean, der angibt ob das angebene Geburtsdatum okay ist. Noch nicht implementiert.
+            val isValidBirthday = true // TODO: Geburtstags Logik implementieren
+
+            // Boolean der angibt ob die Postleitzahl formell okay ist. Dazu prüfen wir, ob der Nutzer ein gültiges Land
+            // ausgewählt hat. Falls ja, prüfen wir anhand des Landes ob die eingebene Postleitzahl nur aus Zahlen besteht
+            val isValidZipCodeFormat = if (country.isNotEmpty() && country != "Keine Angabe") {
+                when (country) {
+                    // und der richtigen Länge des jeweiligen Landes. In dem Fall wird die Postleitzahl als formell okay angesehen.
+                    "Deutschland" -> zipCode.matches(Regex("^[0-9]{5}$"))
+                    "Österreich" -> zipCode.matches(Regex("^[0-9]{4}$"))
+                    "Schweiz" -> zipCode.matches(Regex("^[0-9]{4}$"))
+                    else -> false
+                    // Außerdem auch, wenn gar keine Postleitzahl angegeben wurde.
+                } || zipCode.isEmpty()
+                // Wenn kein gültiges Land ausgewählt wurde..
+            } else {
+                // setzen wir den Wert trotzdem auf true, damit gespeichert werden kann (Dann ist die Postleitzahl sowieso
+                // egal, da wir Land + PLZ brauchen zur API Abfrage
+                true
             }
-            // Und übergeben die Update Map mit den geänderten Profilfeldern dann an die Profilspeichern Funktion
-            saveUserData(updates)
+
+            // Wenn ein API Call (openPLZ API) gestartet wurde, wird das Ergbenis in einer MutableLiveData im ViewModel
+            // gespeichert. Diese beobachten wir, so wissen wir, wann die Ergbenisse da sind und wann wir dann das klicken des
+            // Speicherbuttons weiter verarbeiten können
+            fun observeZipInfos() {
+                viewModel.zipCodeInfos.observe(viewLifecycleOwner) { zipInfo ->
+                    // Wir prüfen ob die erhaltene API Antwort null ist (also eine ungültige Postleitzahl)
+                    if (zipInfo == null) {
+                        // Falls die Antwort ungültig (null) ist, geben wir Fehlermeldungen aus. Einmal im Postleitzahl Feld
+                        binding.EditZipCodeEditText.error = "Ungültige Postleitzahl"
+                        // und einmal als Banner Message
+                        Toast.makeText(requireContext(), "Nicht gespeichert.", Toast.LENGTH_LONG).show()
+                        // Wenn das Ergebnis nicht null ist, wir also gültige Daten zur Postleitzahl erhalten haben..
+                    } else {
+                        // legen wir wieder eine Map an, mit den Profilangaben die gespeichert werden müssen. String ist wieder der Key
+                        // der Datenbank bzw. des Profilfeldes und value der neue Wert
+                        val updates = mutableMapOf<String, Any>()
+
+                        // Wenn die Daten der API Antwort NICHT den bereits gespeicherten entsprechen
+                        if (zipInfo.postalCode != viewModel.userData.value?.zipCode) {
+                            // dann fügen wir die übergebene Postleitzahl
+                            updates["zipCode"] = zipInfo.postalCode
+                            // sowie die übergebene Stadt
+                            updates["city"] = zipInfo.name
+                            // und falls vorhanden
+                            if (zipInfo.federalState != null) {
+                                // das übergebene Bundesland mit in die Update Map ein
+                                updates["state"] = zipInfo.federalState.name
+                            }
+                        }
+
+                        // Ansonsten holen wir uns wieder die angegebenen Werte aus den Eingabefeldern
+                        val name = binding.EditNameEditText.text.toString()
+                        val age = binding.EditAgeEditText.text.toString()
+                        val birthday = binding.EditBirthdayEditText.text.toString()
+                        val relationshipStatus =
+                            binding.EditRelationshipStatusSpinner.selectedItem.toString()
+                        val country = binding.EditCountrySpinner.selectedItem.toString()
+
+                        // Prüfen ob die angegeben Daten sich von den bereits gespeicherten Unterscheiden
+                        // Falls ja, fügen wir sie ebenfalls mit in die Update Map ein
+                        if (name != viewModel.userData.value?.name) {
+                            updates["name"] = name
+                        }
+                        if (age != viewModel.userData.value?.age) {
+                            updates["age"] = age
+                        }
+                        if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {
+                            updates["relationshipStatus"] = relationshipStatus
+                        }
+                        if (birthday != viewModel.userData.value?.birthday) {
+                            updates["birthday"] = birthday
+                        }
+                        if (country != viewModel.userData.value?.country) {
+                            updates["country"] = country
+                        }
+                        val selectedGender = binding.EditGenderSpinner.selectedItem.toString()
+                        if (selectedGender != viewModel.userData.value?.gender) {
+                            updates["gender"] = selectedGender
+                        }
+                        // Und übergeben die Update Map mit den geänderten Profilfeldern dann an die Profilspeichern Funktion
+                        saveUserData(updates)
+                        viewModel.zipCodeInfos.removeObservers(viewLifecycleOwner)
+                    }
+                }
+            }
+
+
+            // Wir prüfen nun, ob alle formellen Prüfungen okay sind, ansonsten geben wir Fehlermeldungen aus, je nachdem
+            // welche Prüfung fehlschlägt
+            // Hier wird geprüft, ob die formelle Namensprüfung okay ist
+            binding.EditNameEditText.error = if (isValidName) null else "Ungültiger Name"
+            // Hier wird geprüft, ob die formelle Altersprüfung okay ist
+            binding.EditAgeEditText.error = if (isValidAge) null else "Ungültiges Alter"
+            // Hier wird geprüft, ob die formelle Postleitzahlprüfung okay ist
+            binding.EditZipCodeEditText.error =
+                if (isValidZipCodeFormat) null else "Ungültige Postleitzahl"
+
+            // Ist eine der formellen Prüfungen nicht okay, wird die weitere Codeausführung unterbrochen
+            if (!isValidName || !isValidAge || !isValidBirthday || !isValidZipCodeFormat) {
+                return@setOnClickListener
+            }
+
+            // Wenn eine Postleitzahl und ein gültiges Land ausgewählt wurde..
+            // WICHTIG: HIER ERFOLGT EIN API CALL (openPLZ API)
+            if (zipCode.isNotEmpty() && country.isNotEmpty() && country != "Keine Angabe") {
+                // holen wir uns anhand des ausgewählten Landes das Landeskürzel
+                val countryCode = when (country) {
+                    "Deutschland" -> "de"
+                    "Österreich" -> "at"
+                    "Schweiz" -> "ch"
+                    else -> ""
+                }
+                // Mit dem Landeskürzel und der angegebenen Postleitzahl, holen wir uns Infos zur Postleitzahl
+                viewModel.loadZipInfos(countryCode, zipCode)
+                observeZipInfos()
+                // Wenn entweder keine Postleitzahl oder kein gültiges Land vorhanden ist..
+                // WICHTIG: WENN ALSO KEIN API CALL ERFOLGT!!!
+            } else {
+                // erstellen wir eine Map mit den Profilangaben die geändert werden müssen. String ist dabei der Key des
+                // Datenbank/Profilfeldes und der value der jeweilige Wert
+                val updates = mutableMapOf<String, Any>()
+                // Wenn die jeweilige Profilangabe nicht mit der bereits gespeicherten Profileingabe übereinstimmt ..
+                //  // fügen wir den neuen Wert mit Key in die Update Map ein.
+
+                // Wir prüfen wir ob sich der Name geändert hat
+                if (name != viewModel.userData.value?.name) {
+                    updates["name"] = name
+                }
+                // Wir prüfen ob sich das Alter geändert hat
+                if (age != viewModel.userData.value?.age) {
+                    updates["age"] = age
+                }
+                // Wir überprüfen ob sich der Beziehungsstatus geändert hat
+                if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {
+                    updates["relationshipStatus"] = relationshipStatus
+                }
+                // Wir überprüfen ob sich der Geburtstag geändert hat
+                if (birthday != viewModel.userData.value?.birthday) {
+                    updates["birthday"] = birthday
+                }
+                // Wir überprüfen ob sich das Land geändert hat
+                if (country != viewModel.userData.value?.country) {
+                    updates["country"] = country
+                }
+                // Wir überprüfen ob sich das Geschlecht geändert hat
+                if (selectedGender != viewModel.userData.value?.gender) {
+                    updates["gender"] = selectedGender
+                }
+                if (zipCode != viewModel.userData.value?.zipCode) {
+                    if (zipCode.isEmpty()) {
+                        updates["zipCode"] = ""
+                        updates["city"] = ""
+                        updates["state"] = ""
+                    } else {
+                        updates["zipCode"] = zipCode
+                    }
+                }
+                // Wir übergeben nun die Map mit den Updates an die Profilspeicherfunktion
+                saveUserData(updates)
+            }
         }
-    }
 }
 
 
