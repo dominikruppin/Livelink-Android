@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.database.FirebaseDatabase
 import com.livelink.databinding.ActivityMainBinding
 import androidx.activity.viewModels
+import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -73,26 +74,33 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
 
         // Überprüfen in welches Fragment der NavController gerade navigiert
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            // Je nach Fragment die Toolbar ein oder ausblenden
-            // Außerdem den Titel in der Toolbar anpassen
-            when (destination.id) {
+        navView.setNavigationItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
                 R.id.overviewFragment -> {
-                    supportActionBar?.show()
-                    supportActionBar?.title = "Übersicht"
+                    navController.navigate(R.id.overviewFragment)
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
                 }
                 R.id.channelsFragment -> {
-                    supportActionBar?.show()
-                    supportActionBar?.title = "Channels"
+                    navController.navigate(R.id.channelsFragment)
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
                 }
                 R.id.editProfileFragment -> {
-                    supportActionBar?.show()
-                    supportActionBar?.title = "Profil bearbeiten"
+                    navController.navigate(R.id.editProfileFragment)
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                    true
                 }
-                R.id.channelFragment -> {
-                    supportActionBar?.show()
-                    supportActionBar?.title = viewModel.currentChannel.value?.channelID
-                }
+                else -> false
+            }
+        }
+
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            when (destination.id) {
+                R.id.overviewFragment -> supportActionBar?.title = "Übersicht"
+                R.id.channelsFragment -> supportActionBar?.title = "Channels"
+                R.id.editProfileFragment -> supportActionBar?.title = "Profil bearbeiten"
+                R.id.channelFragment -> supportActionBar?.title = viewModel.currentChannel.value?.channelID
                 else -> supportActionBar?.hide()
             }
         }
@@ -275,18 +283,9 @@ class MainActivity : AppCompatActivity() {
     // Anpassen der zurück Navigation
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-        // Überprüfen, ob das aktuelle Ziel das LoginFragment,
-        // Passwort vergessen oder RegisterFragment ist
-        val currentDestinationId = navController.currentDestination?.id
-        if (currentDestinationId == R.id.loginFragment ||
-            currentDestinationId == R.id.registerFragment || currentDestinationId == R.id.passwordResetFragment
-        ) {
-            // Rücknavigation in diesen Fragmenten unterbinden
-            return false
-        }
-        // Ansonsten normale Navigation ermöglichen
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
+
 
     // Reagieren auf Klicks im Optionsmenü der Action Bar
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
