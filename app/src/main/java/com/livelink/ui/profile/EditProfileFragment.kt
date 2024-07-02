@@ -74,6 +74,15 @@ class EditProfileFragment : Fragment() {
             // Hat der Nutzer irgendwas davon nicht angegeben, wird Standardmäßig ein leerer String übergeben
             binding.EditNameEditText.setText(user.name)
             binding.EditAgeEditText.setText(user.age)
+
+            if (user.birthday.isEmpty()) {
+                binding.EditAgeEditText.isClickable = false
+                binding.EditBirthdayEditText.isClickable = false
+            } else {
+                binding.EditAgeEditText.isClickable = true
+                binding.EditBirthdayEditText.isClickable = true
+            }
+
             binding.EditBirthdayEditText.setText(user.birthday)
             binding.EditZipCodeEditText.setText(user.zipCode)
 
@@ -124,7 +133,9 @@ class EditProfileFragment : Fragment() {
 
             // Beim Klicken aus das Geburtstagsfeld öffnen wir den DatePicker
             binding.EditBirthdayEditText.setOnClickListener {
-                showDatePickerDialog()
+                if (user.birthday.isEmpty()) {
+                    showDatePickerDialog()
+                }
             }
 
             // Wir überwachen ob die Auswahl des Landes geändert wird
@@ -180,7 +191,38 @@ class EditProfileFragment : Fragment() {
             // Ergebnis ist ein Boolean
             val isValidAge = age.isEmpty() || age.toInt() in 16..100
             // Ebenfalls ein Boolean, der angibt ob das angebene Geburtsdatum okay ist. Noch nicht implementiert.
-            val isValidBirthday = true // TODO: Geburtstags Logik implementieren
+            var isValidBirthday = false
+
+            if (binding.EditBirthdayEditText.text.toString().isNotEmpty()) {
+                val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                dateFormat.isLenient = false
+                val date = dateFormat.parse(binding.EditBirthdayEditText.text.toString())
+                // Heutiges Datum
+                val today = Calendar.getInstance()
+                // Minimum Alter: 16 Jahre
+                val minAge = Calendar.getInstance()
+                minAge.add(Calendar.YEAR, -16)
+                // Maximum Alter: 100 Jahre
+                val maxAge = Calendar.getInstance()
+                maxAge.add(Calendar.YEAR, -100)
+                // Prüfen, ob das Datum zwischen den gültigen Altersgrenzen liegt
+                if (date.before(minAge.time) && date.after(maxAge.time)) {
+                    isValidBirthday = true
+                    binding.EditAgeEditText.isClickable = false
+                    // Alter berechnen
+                    val birthDate = Calendar.getInstance().apply { time = date }
+                    var age = today.get(Calendar.YEAR) - birthDate.get(Calendar.YEAR)
+                    if (today.get(Calendar.DAY_OF_YEAR) < birthDate.get(Calendar.DAY_OF_YEAR)) {
+                        age--
+                    }
+
+                    // Alter in EditAgeText setzen
+                    binding.EditAgeEditText.setText(age.toString())
+                } else {
+                    isValidBirthday = false
+                    binding.EditAgeEditText.isClickable = true
+                }
+            }
 
             // Boolean der angibt ob die Postleitzahl formell okay ist. Dazu prüfen wir, ob der Nutzer ein gültiges Land
             // ausgewählt hat. Falls ja, prüfen wir anhand des Landes ob die eingebene Postleitzahl nur aus Zahlen besteht
@@ -243,8 +285,12 @@ class EditProfileFragment : Fragment() {
                         if (name != viewModel.userData.value?.name) {
                             updates["name"] = name
                         }
-                        if (age != viewModel.userData.value?.age) {
-                            updates["age"] = age
+                        // Prüfen ob kein Geburtsdatum vorliegt
+                        if (binding.EditBirthdayEditText.text.toString().isNotEmpty()) {
+                            // Wenn kein Geburtsdatum vorliegt, prüfen ob das Alter geändert wurde
+                            if (age != viewModel.userData.value?.age) {
+                                updates["age"] = age
+                            }
                         }
                         if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {
                             updates["relationshipStatus"] = relationshipStatus
@@ -276,6 +322,8 @@ class EditProfileFragment : Fragment() {
             // Hier wird geprüft, ob die formelle Postleitzahlprüfung okay ist
             binding.EditZipCodeEditText.error =
                 if (isValidZipCodeFormat) null else "Ungültige Postleitzahl"
+            // Hier wird geprüft, ob die formelle Altersprüfung okay ist
+            binding.EditBirthdayInputLayout.error = if (isValidBirthday) null else "Ungültiges Geburtsdatum. Mindestens 16 Jahre, maximal 100 Jahre."
 
             // Ist eine der formellen Prüfungen nicht okay, wird die weitere Codeausführung unterbrochen
             if (!isValidName || !isValidAge || !isValidBirthday || !isValidZipCodeFormat) {
@@ -309,8 +357,10 @@ class EditProfileFragment : Fragment() {
                     updates["name"] = name
                 }
                 // Wir prüfen ob sich das Alter geändert hat
-                if (age != viewModel.userData.value?.age) {
-                    updates["age"] = age
+                if (binding.EditBirthdayEditText.text.toString().isNotEmpty()) {
+                    if (age != viewModel.userData.value?.age) {
+                        updates["age"] = age
+                    }
                 }
                 // Wir überprüfen ob sich der Beziehungsstatus geändert hat
                 if (relationshipStatus != viewModel.userData.value?.relationshipStatus) {

@@ -23,6 +23,9 @@ import com.livelink.data.model.Message
 import com.livelink.data.model.ProfileVisitor
 import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
     // Instanz für das Authentifizierungssystem (Registrierung, Login, Passwort vergessen)
@@ -84,6 +87,12 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     // Wird beim erstellen des ViewModels ausgeführt (also appstart)
     init {
+        // Wenn wir die UserData haben, prüfen wir das Geburtsdatum
+        userData.observeForever { userData ->
+            userData?.let {
+                updateBirthday()
+            }
+        }
         // Wir richten die Umgebung des eingeloggten Users ein, zb holen wir uns
         // seine aktuellen UserDaten
         setupUserEnv()
@@ -114,6 +123,35 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             // userDataListener
             userDataListener?.remove()
             userDataListener = null
+        }
+    }
+
+    fun updateBirthday() {
+        Log.d("UpdateBirthday", "UpdateBirthday aufgerufen. ")
+        Log.d("UpdateBirthday", "UserData ist: ${userData.value}")
+        if (userData.value != null && userData.value!!.birthday.isNotEmpty()) {
+            Log.d("UpdateBirthday", "Geburtsdatum: ${userData.value?.birthday}")
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+        dateFormat.isLenient = false
+        val date = dateFormat.parse(userData.value!!.birthday)
+        // Heutiges Datum
+        val today = Calendar.getInstance()
+        // Alter berechnen
+        val birthDate = Calendar.getInstance().apply { time = date }
+        var age = today.get(Calendar.YEAR) - birthDate.get(Calendar.YEAR)
+        if (today.get(Calendar.DAY_OF_YEAR) < birthDate.get(Calendar.DAY_OF_YEAR)) {
+            age--
+        }
+            // Speichern des Alters in Firestore
+            val updates = mapOf("age" to age.toString())
+            updateUserData(updates) { success ->
+                if (success) {
+                    Log.d("UpdateBirthday", "Alter erfolgreich aktualisiert.")
+                } else {
+                    Log.e("UpdateBirthday", "Fehler beim Aktualisieren des Alters.")
+                }
+            }
+
         }
     }
 
