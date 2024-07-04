@@ -1,18 +1,18 @@
 package com.livelink
 
-import android.net.Uri
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.PopupWindow
 import android.widget.TextView
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import com.google.android.material.navigation.NavigationView
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -21,26 +21,23 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
-import com.google.firebase.database.FirebaseDatabase
 import com.livelink.databinding.ActivityMainBinding
-import androidx.activity.viewModels
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
 import coil.load
-import com.livelink.data.UserData
+import com.livelink.data.model.UserData
 import com.livelink.data.model.ProfileVisitor
 import com.livelink.databinding.PopupProfileBinding
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private val viewModel: SharedViewModel by viewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,16 +78,19 @@ class MainActivity : AppCompatActivity() {
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
+
                 R.id.channelsFragment -> {
                     navController.navigate(R.id.channelsFragment)
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
+
                 R.id.editProfileFragment -> {
                     navController.navigate(R.id.editProfileFragment)
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
+
                 else -> false
             }
         }
@@ -101,18 +101,22 @@ class MainActivity : AppCompatActivity() {
                     supportActionBar?.title = "Übersicht"
                     supportActionBar?.show()
                 }
+
                 R.id.channelsFragment -> {
                     supportActionBar?.title = "Channels"
                     supportActionBar?.show()
                 }
+
                 R.id.editProfileFragment -> {
                     supportActionBar?.title = "Profil bearbeiten"
                     supportActionBar?.show()
                 }
+
                 R.id.channelFragment -> {
                     supportActionBar?.title = viewModel.currentChannel.value?.channelID
                     supportActionBar?.show()
                 }
+
                 else -> supportActionBar?.hide()
             }
         }
@@ -124,7 +128,7 @@ class MainActivity : AppCompatActivity() {
             if (user.profilePicURL.isEmpty()) {
                 // Setzen wir einen Platzhalter in die Imageview
                 profilePic.setImageResource(R.drawable.placeholder_profilepic)
-            // Wenn er ein Bild hat..
+                // Wenn er ein Bild hat..
             } else {
                 // .. laden wir das Bild in die ImageView
                 // Das Bild kriegen wir aus den UserData (profilePicURL)
@@ -140,43 +144,81 @@ class MainActivity : AppCompatActivity() {
                 // Öffnen wir das Profil des eingeloggten Users
                 viewModel.openProfile(user.username)
             }
+
+            val lockInfo = user.lockInfo
+            if (lockInfo != null) {
+                val expirationTimestamp = lockInfo.expirationTimestamp
+                // Aktuelle Zeit
+                val currentTimeMillis = System.currentTimeMillis()
+
+                if (expirationTimestamp == -1L || currentTimeMillis < expirationTimestamp) {
+                    Log.d("Lock", "Nutzer ist noch gesperrt")
+                    isLocked(user)
+                } else {
+                    Log.d("Lock", "Nutzer ist nicht mehr gesperrt.")
+                    viewModel.unlockUser(
+                        user.username,
+                        true
+                    ) // Funktion zum Entfernen der Sperre aufrufen
+                }
+            }
         }
 
-        // Wenn ein Nutzerprofil aufgerufen wird, werden die Daten
-        // in die LiveData (profileUserData) geladen
-        // Hier beobachten wir die LiveData. Neue LiveData bedeutet
-        // das ein neues Profil geöffnet werden soll
-        viewModel.profileUserData.observe(this) { userData ->
-            // Wir erstellen aus dem aktuell eingeloggten User und seinem
-            // Usernamen und der URL zu seinem Profilbild ein neues Objekt
-            // vom Typ ProfileVisitor
-            val visitor = viewModel.userData.value?.let {
-                ProfileVisitor(
-                    it.username,
-                    it.profilePicURL
-                )
-            }
-            // Wenn die Daten des Users dessen Profil wir aufrufen wollen
-            // nicht null sind..
-            if (userData != null) {
-                // Dann rufen wir die Funktion zum öffnen des Profils mit
-                // diesen Daten auf
-                showProfilePopup(userData)
-                // Wir prüfen ob wir NICHT unser eigenes Profil aufrufen
-                if (viewModel.userData.value!!.username != userData.username) {
-                    // Wir prüfen ob unsere eigenen Daten nicht NULL sind
-                    if (visitor != null) {
-                        // Wir speichern unsere Daten (ProfileUser Objekt)
-                        // in den UserData des Nutzers, dessen Profil wir
-                        // aufgerufen haben in den letzten Profilbesuchern
-                        // Dafür übergeben wir unsere eigenen Daten als UserData
-                        // und die des Nutzers, dessen Profil wir aufgerufen haben
-                        // als ProfileVisitor
-                        viewModel.addProfileVisitor(userData, visitor)
+            // Wenn ein Nutzerprofil aufgerufen wird, werden die Daten
+            // in die LiveData (profileUserData) geladen
+            // Hier beobachten wir die LiveData. Neue LiveData bedeutet
+            // das ein neues Profil geöffnet werden soll
+            viewModel.profileUserData.observe(this) { userData ->
+                // Wir erstellen aus dem aktuell eingeloggten User und seinem
+                // Usernamen und der URL zu seinem Profilbild ein neues Objekt
+                // vom Typ ProfileVisitor
+                val visitor = viewModel.userData.value?.let {
+                    ProfileVisitor(
+                        it.username,
+                        it.profilePicURL
+                    )
+                }
+                // Wenn die Daten des Users dessen Profil wir aufrufen wollen
+                // nicht null sind..
+                if (userData != null) {
+                    // Dann rufen wir die Funktion zum öffnen des Profils mit
+                    // diesen Daten auf
+                    showProfilePopup(userData)
+                    // Wir prüfen ob wir NICHT unser eigenes Profil aufrufen
+                    if (viewModel.userData.value!!.username != userData.username) {
+                        // Wir prüfen ob unsere eigenen Daten nicht NULL sind
+                        if (visitor != null) {
+                            // Wir speichern unsere Daten (ProfileUser Objekt)
+                            // in den UserData des Nutzers, dessen Profil wir
+                            // aufgerufen haben in den letzten Profilbesuchern
+                            // Dafür übergeben wir unsere eigenen Daten als UserData
+                            // und die des Nutzers, dessen Profil wir aufgerufen haben
+                            // als ProfileVisitor
+                            viewModel.addProfileVisitor(userData, visitor)
+                        }
                     }
                 }
             }
         }
+
+    fun isLocked(userData: UserData) {
+        viewModel.auth.signOut()
+        findNavController(R.id.nav_host_fragment_content_main).navigate(R.id.loginFragment)
+        val expirationTimestamp = userData.lockInfo!!.expirationTimestamp
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+        val expirationDate = if (userData.lockInfo.expirationTimestamp == -1L) "permanent" else "bis zum " + dateFormat.format(Date(expirationTimestamp))
+        val userLockReason = userData.lockInfo.reason
+        val builder = AlertDialog.Builder(this)
+        val lockText = "Dein Account wurde von ${userData.lockInfo.lockedBy} <b>$expirationDate</b> gesperrt und wird im Laufe des darauffolgenden Tages wieder entsperrt.\n<b>Begründung:</b><br>${userLockReason}"
+        builder.setTitle("Account gesperrt")
+        builder.setMessage(fromHtml(lockText))
+        builder.setPositiveButton("OK") { dialogInterface: DialogInterface, _: Int ->
+            dialogInterface.dismiss()
+        }
+
+        // AlertDialog anzeigen
+        val dialog = builder.create()
+        dialog.show()
     }
 
     // Funktion zum anzeigen des Profils als Popup

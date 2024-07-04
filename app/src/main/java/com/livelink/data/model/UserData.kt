@@ -1,4 +1,4 @@
-package com.livelink.data
+package com.livelink.data.model
 
 import com.livelink.data.model.Channel
 import com.livelink.data.model.ProfileVisitor
@@ -20,5 +20,6 @@ data class UserData(
     val state: String = "",
     val city: String = "",
     val lastChannels: List<Channel> = emptyList(),
-    val recentProfileVisitors: List<ProfileVisitor> = emptyList()
+    val recentProfileVisitors: List<ProfileVisitor> = emptyList(),
+    val lockInfo: LockInfo? = null
 )

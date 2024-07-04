@@ -1,5 +1,7 @@
 package com.livelink
 
+import android.text.Html
+import android.text.Spanned
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -22,3 +24,11 @@ fun getUserStatus(statusNumber: Int): String {
         }
         return dateFormat.format(date)
     }
+
+fun fromHtml(html: String): Spanned {
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+        Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
+    } else {
+        Html.fromHtml(html)
+    }
+}

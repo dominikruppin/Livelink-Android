@@ -11,12 +11,13 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import com.livelink.data.Repository
-import com.livelink.data.UserData
+import com.livelink.data.model.UserData
 import com.livelink.data.model.Channel
 import com.livelink.data.model.ChannelJoin
 import com.livelink.data.model.Message
@@ -25,6 +26,7 @@ import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
@@ -126,6 +128,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+
     fun updateBirthday() {
         Log.d("UpdateBirthday", "UpdateBirthday aufgerufen. ")
         Log.d("UpdateBirthday", "UserData ist: ${userData.value}")
@@ -198,8 +201,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     // Ruft ein Nutzer das Profil eines anderen Nutzers auf, wird er in den Profil-
     // Besuchers dieses Nutzers gespeichert. So kann jeder seine letzten Profil-
     // Besucher sehen
-
-    // TODO:
     fun addProfileVisitor(visitedUser: UserData, visitor: ProfileVisitor) {
         // Aktuelle Liste der Profilbesucher aus dem userData des aufgerufenen Nutzers laden
         val updatedProfileVisitors = visitedUser.recentProfileVisitors.toMutableList()
@@ -465,6 +466,24 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
     }
 
+    fun processCommand(command: String) {
+        when {
+            command.startsWith("/profil") || command.startsWith("/w") -> {
+                val parts = command.split(" ")
+                if (parts.size < 2) {
+                    Toast.makeText(getApplication(), "Gib einen Nutzernamen an.", Toast.LENGTH_SHORT).show()
+                    return
+                }
+
+                val username = parts[1]
+                openProfile(username)
+            }
+            command.startsWith("/lock") || command.startsWith("/userlock") -> {
+                lockUser(command)
+            }
+        }
+    }
+
     // Funktion zum öffnen eines Profils
     fun openProfile(username: String) {
         // Wandeln den übergebenen Usernamen in Kleinbuchstaben um
@@ -501,6 +520,146 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 _profileUserData.postValue(null)
             }
     }
+
+    // Funktion um einen Nutzer zu sperren
+    private fun lockUser(command: String) {
+        if (userData.value!!.status < 5) {
+            Toast.makeText(getApplication(), "Du darfst diesen Befehl nicht nutzen.", Toast.LENGTH_LONG).show()
+            return
+        }
+        // Splitte den Command an Leerzeichen, um die einzelnen Teile zu erhalten
+        val parts = command.split(":")
+
+        // Überprüfe die Anzahl der Teile im Command
+        if (parts.size < 1) {
+            Toast.makeText(getApplication(), "Ungültiges Format des Lock-Befehls.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Der erste Teil ist der Username
+        val usernameAndReason = parts[0].substringAfter("/lock ").trim()
+
+        // Aufheben der Sperre, falls der Username mit '!' beginnt
+        if (usernameAndReason.startsWith("!")) {
+            val username = usernameAndReason.substring(1).trim()
+            unlockUser(username, false)
+            return
+        }
+
+        // Prüfen ob Befehl vollständig
+        if (parts.size < 3) {
+            Toast.makeText(getApplication(), "Ungültiges Format des Lock-Befehls.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Der zweite Teil ist die Begründung
+        val reason = parts[1].trim()
+
+        // Der dritte Teil ist die Dauer oder ! für permanent
+        val durationOrPermanent = parts[2].trim()
+
+        // Sperrlänge
+        val expirationTimestamp = if (durationOrPermanent == "!") {
+            -1L // Permanent: Kein Ablaufdatum
+        } else {
+            val days = durationOrPermanent.toLongOrNull() ?: run {
+                Toast.makeText(getApplication(), "Ungültige Angabe für die Dauer.", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            if (days !in 1..365) {
+                Toast.makeText(getApplication(), "Die Sperrdauer muss zwischen 1 und 365 Tagen liegen.", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, days.toInt())
+            calendar.timeInMillis
+        }
+
+        // Suchen nach dem Nutzer anhand des Usernamens
+        usersCollectionReference.whereEqualTo("usernameLowercase", usernameAndReason.lowercase())
+            .get()
+            .addOnSuccessListener { documents ->
+                // Überprüfen, ob der Nutzer gefunden wurde
+                if (!documents.isEmpty) {
+                    val documentSnapshot = documents.documents[0]
+                    val userDocumentRef = documentSnapshot.reference
+
+                    // Map erstellen, um die Sperrinformationen zu speichern
+                    val lockInfo = mutableMapOf(
+                        "lockedBy" to userData.value!!.username,
+                        "reason" to reason,
+                        "expirationTimestamp" to expirationTimestamp
+                    )
+
+                    // UserData aktualisieren und Lock-Informationen hinzufügen
+                    userDocumentRef.update("lockInfo", lockInfo)
+                        .addOnSuccessListener {
+                            val formattedMessage = if (expirationTimestamp == -1L) {
+                                "Nutzer ${usernameAndReason.substringBefore("!")} erfolgreich permanent gesperrt."
+                            } else {
+                                val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+                                val expirationDate = dateFormat.format(Date(expirationTimestamp))
+                                "Nutzer ${usernameAndReason.substringBefore("!")} erfolgreich bis $expirationDate gesperrt."
+                            }
+                            Toast.makeText(getApplication(), formattedMessage, Toast.LENGTH_SHORT).show()
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(getApplication(), "Fehler beim Sperren des Nutzers ${usernameAndReason.substringBefore("!")}.", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Toast.makeText(getApplication(), "Nutzer mit Username '${usernameAndReason.substringBefore("!")}' nicht gefunden.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(getApplication(), "Fehler beim Suchen des Nutzers mit Username '${usernameAndReason.substringBefore("!")}'.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+    // Funktion zur Aufhebung der Sperre eines Nutzers
+    fun unlockUser(username: String, isSystem: Boolean) {
+        if (!isSystem && userData.value!!.status < 5) {
+            Toast.makeText(getApplication(), "Du darfst diesen Befehl nicht nutzen.", Toast.LENGTH_LONG).show()
+            return
+        }
+        // Suchen nach dem Nutzer anhand des Usernamens
+        usersCollectionReference.whereEqualTo("usernameLowercase", username.lowercase())
+            .get()
+            .addOnSuccessListener { documents ->
+                // Überprüfen, ob der Nutzer gefunden wurde
+                if (!documents.isEmpty) {
+                    val documentSnapshot = documents.documents[0]
+                    val userDocumentRef = documentSnapshot.reference
+
+                    val lockInfo = documentSnapshot["lockInfo"] as? Map<*, *>
+
+                    if (lockInfo != null) {
+                        // Sperre aufheben, indem lockInfo gelöscht wird
+                        userDocumentRef.update("lockInfo", FieldValue.delete())
+                            .addOnSuccessListener {
+                                Toast.makeText(getApplication(), "Sperrung für Nutzer $username erfolgreich aufgehoben.", Toast.LENGTH_LONG).show()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(getApplication(), "Fehler beim Aufheben der Sperrung für Nutzer $username.", Toast.LENGTH_LONG).show()
+                            }
+                    } else {
+                        // Keine Sperrinformationen gefunden
+                        Toast.makeText(getApplication(), "Nutzer $username ist nicht gesperrt.", Toast.LENGTH_LONG).show()
+                    }
+                } else {
+                    // Nutzer nicht gefunden
+                    Toast.makeText(getApplication(), "Nutzer mit Username '$username' nicht gefunden.", Toast.LENGTH_LONG).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(getApplication(), "Fehler beim Suchen des Nutzers mit Username '$username'.", Toast.LENGTH_LONG).show()
+            }
+    }
+
+
+
 
     // Funktion um nach Nutzern zu suchen
     fun searchUsers(query: String) {

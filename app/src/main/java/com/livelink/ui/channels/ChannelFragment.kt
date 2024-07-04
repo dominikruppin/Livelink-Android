@@ -77,14 +77,8 @@ class ChannelFragment : Fragment() {
             // Wir prüfen ob Text leer ist oder null
             if (!text.isNullOrEmpty()) {
                 // Wenn der Nutzer eine Nachricht(alias Command) eingibt, der mit /profil beginnt...
-                if (text.startsWith("/profil")) {
-                    // .. holen wir uns nach dem Leerzeichen den Usernamen
-                    val username = text.split(" ").getOrNull(1)
-                    // Wenn der username nicht leer ist..
-                    if (!username.isNullOrEmpty()) {
-                        // .. öffnen wir das Profil des eingegebenen Users
-                        viewModel.openProfile(username.lowercase())
-                    }
+                if (text.startsWith("/")) {
+                    viewModel.processCommand(text.toString())
                     // Eingabezeile leeren damit ready für neue Nachricht
                     binding.editTextMessage.text?.clear()
                 } else {

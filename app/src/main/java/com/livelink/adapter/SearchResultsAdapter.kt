@@ -4,8 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.livelink.R
-import com.livelink.data.UserData
+import com.livelink.data.model.UserData
 import com.livelink.databinding.ItemUserSearchResultBinding
 
 class SearchResultsAdapter(
