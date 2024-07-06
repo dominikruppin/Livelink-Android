@@ -256,6 +256,8 @@ class MainActivity : AppCompatActivity() {
         popupBinding.textViewUsername.text = userData.username
         if (userData.profilePicURL.isNotEmpty()) {
             popupBinding.imageViewProfilePic.load(userData.profilePicURL)
+        } else {
+            popupBinding.imageViewProfilePic.setImageResource(R.drawable.placeholder_profilepic)
         }
 
         popupBinding.textViewStatus.text = getUserStatus(userData.status)

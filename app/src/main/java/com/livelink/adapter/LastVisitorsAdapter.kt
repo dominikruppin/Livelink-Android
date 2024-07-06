@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import com.livelink.R
 import com.livelink.data.model.Channel
 import com.livelink.data.model.ProfileVisitor
 import com.livelink.databinding.ItemRecentVisitorBinding
@@ -30,7 +31,11 @@ class LastVisitorsAdapter(
     override fun onBindViewHolder(holder: VisitorViewHolder, position: Int) {
         val item = dataset[position]
         // Anbinden der Daten
-        holder.binding.profileImageView.load(item.profilePicURL)
+        if (item.profilePicURL.isNotEmpty()) {
+            holder.binding.profileImageView.load(item.profilePicURL)
+        } else {
+            holder.binding.profileImageView.setImageResource(R.drawable.placeholder_profilepic)
+        }
         holder.binding.userNameTextView.text = item.username
 
         // Wenn ein Channel angeklickt wird..

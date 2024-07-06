@@ -3,8 +3,12 @@ package com.livelink.ui.channels
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +22,9 @@ import coil.imageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.launch
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FieldValue
+import kotlinx.coroutines.delay
 
 
 // Fragment welches die Nachrichten des aktuellen Channels anzeigt, außerdem ein Eingabefeld und Button um
@@ -41,6 +48,18 @@ class ChannelFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                // Menü leeren, um sicherzustellen, dass keine Elemente vorhanden sind
+                menu.clear()
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                // Keine Menüelemente, nichts zutun (juhu)
+                return false
+            }
+        }, viewLifecycleOwner)
+
         // Wir binden hier bereits den Adapter, mit einer Funktion um Profile zu öffnen
         adapter = MessageAdapter(emptyList()) { clickedUser ->
             viewModel.openProfile(clickedUser)
@@ -54,11 +73,16 @@ class ChannelFragment : Fragment() {
             channel.channelID.let {
                 // .. starten wir das abrufen der Nachrichten des Channels
                 viewModel.fetchMessages(channel)
+                sendOnlineStatus()
                 val backgroundUrl = channel.backgroundURL
                 if (backgroundUrl.isNotEmpty()) {
                     binding.imageViewChannelBackground.load(channel.backgroundURL)
                 }
             }
+        }
+
+        viewModel.onlineUsers.observe(viewLifecycleOwner) {
+            Log.d("Channel", "OnlineUser geladen: $it")
         }
 
         // Wir beobachten ob es neue Nachrichten gibt und updaten dann den Adapter
@@ -67,6 +91,20 @@ class ChannelFragment : Fragment() {
             Log.d("Chat", "Nachrichten: $messages")
             adapter.updateMessages(messages)
             scrollToBottom()
+        }
+
+        // Beobachtet die LiveData in der die ChatBotantwort gespeichert wird,
+        // welche von der Perplexity API geladen kommt
+        viewModel.botMessage.observe(viewLifecycleOwner) { botMessage ->
+            Log.d("Chat", "Botantwort: $botMessage")
+            val currentChannel = viewModel.currentChannel.value
+            if (botMessage != null && currentChannel != null) {
+                // Die Nachricht vom Bot an den Server senden
+                viewModel.sendMessage(botMessage)
+                // Livedata zurücksetzen, damit beim nächsten Channeljoin
+                // nicht noch mal gesendet wird
+                viewModel.resetBotMessage()
+            }
         }
 
         // Button zum senden der Nachricht an den Channel
@@ -82,6 +120,11 @@ class ChannelFragment : Fragment() {
                     // Eingabezeile leeren damit ready für neue Nachricht
                     binding.editTextMessage.text?.clear()
                 } else {
+                    if (text.toString().lowercase().startsWith("paul")) {
+                        val textToBot = text.toString().replaceFirst("(?i)paul".toRegex(), "").trim()
+                        Log.d("Chat", "Bot wurde angesprochen. Nachricht: ${text.toString()}")
+                        viewModel.sendMessageToBot(textToBot)
+                    }
                     // Wir senden die Nachricht, dazu erstellen wir ein Message-Objekt mit den benötigten Infos (username, nachricht)
                     viewModel.sendMessage(
                         // Wir holen uns hier noch fix über die userData den Usernamen des sendenen Nutzers und aus der Eingabezeile den Text
@@ -101,5 +144,15 @@ class ChannelFragment : Fragment() {
 
     private fun scrollToBottom() {
         binding.recyclerViewMessages.scrollToPosition(adapter.itemCount - 1)
+    }
+
+    private fun sendOnlineStatus() {
+        lifecycleScope.launch {
+            while (true) {
+                Log.d("Channel", "Userstatus geupdatet")
+                viewModel.addOrUpdateOnlineUser()
+                delay(5000)
+            }
+        }
     }
 }

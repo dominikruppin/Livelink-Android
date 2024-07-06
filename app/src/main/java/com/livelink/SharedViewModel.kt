@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.DocumentReference
@@ -21,7 +22,9 @@ import com.livelink.data.model.UserData
 import com.livelink.data.model.Channel
 import com.livelink.data.model.ChannelJoin
 import com.livelink.data.model.Message
+import com.livelink.data.model.OnlineUser
 import com.livelink.data.model.ProfileVisitor
+import com.livelink.data.remote.BotApi
 import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -41,7 +44,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     // Storage für Profilbilder
     private val storage = FirebaseStorage.getInstance()
     // Repository für API Call
-    private val repository = Repository(ZipCodeApi)
+    private val repository = Repository(ZipCodeApi, BotApi)
 
     // Speichert den aktuell eingeloggten User
     private val _currentUser = MutableLiveData<FirebaseUser?>(auth.currentUser)
@@ -82,9 +85,16 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     val searchResults: LiveData<List<UserData>>
         get() = _searchResults
 
+    private val _onlineUsers = MutableLiveData<List<OnlineUser>>()
+    val onlineUsers: LiveData<List<OnlineUser>>
+        get() = _onlineUsers
+
+    val botMessage: LiveData<Message?> = repository.botMessage
+
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
     private var messageListener: ListenerRegistration? = null
+    private var onlineUserListener: ListenerRegistration? = null
 
 
     // Wird beim erstellen des ViewModels ausgeführt (also appstart)
@@ -155,6 +165,13 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 }
             }
 
+        }
+    }
+
+    fun sendMessageToBot(text: String) {
+        viewModelScope.launch {
+            val apiKey = BuildConfig.PERPLEXITY_API_KEY
+            repository.sendMessageToBot(text, apiKey)
         }
     }
 
@@ -284,6 +301,15 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // LiveData für die Botantwort zurücksetzen, verhindert mehrfaches posten
+    // wenn ein neuer Channel betreten wird
+    fun resetBotMessage() {
+        repository.resetBotMessage()
+    }
+
+
+
+
     // Funktion zum abrufen der Nachrichten eines Channels
     fun fetchMessages(channelJoin: ChannelJoin) {
         // Zuerst den bestehenden Listener entfernen, falls vorhanden
@@ -320,6 +346,63 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 // Speichern die Liste in der LiveData
                 Log.d("Chat", "Folgende Nachrichten geladen: $messageList")
                 _messages.postValue(messageList)
+            }
+    }
+
+    // Funktion zum abrufen der OnlineUser eines Channels
+    fun fetchOnlineUsersInChannel() {
+        val channelJoin = currentChannel.value
+        val sixSecondsAgo = Timestamp.now().let {
+            Timestamp(it.seconds - 5, it.nanoseconds)
+        }
+        channelsReference.document(channelJoin!!.channelID)
+            .collection("onlineUsers")
+            .whereGreaterThan("timestamp", sixSecondsAgo)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val onlineUsers = mutableListOf<OnlineUser>()
+                querySnapshot.documents.forEach { doc ->
+                    val onlineUser = doc.toObject(OnlineUser::class.java)
+                    onlineUser?.let {
+                        onlineUsers.add(it)
+                    }
+                }
+                _onlineUsers.postValue(onlineUsers)
+            }
+            .addOnFailureListener { e ->
+                Log.e("Channels", "Error fetching online users", e)
+            }
+    }
+
+    fun addOrUpdateOnlineUser() {
+        val channelJoin = currentChannel.value
+        val username = userData.value!!.username
+        val onlineUsersRef = channelsReference
+            .document(channelJoin!!.channelID)
+            .collection("onlineUsers")
+            .document(username)
+
+        Log.d("Channel", "Versuche nun zu updaten")
+        onlineUsersRef.update("timestamp", FieldValue.serverTimestamp())
+            .addOnSuccessListener {
+                Log.d("Channel", "Timestamp geupdatet für $username")
+                fetchOnlineUsersInChannel()
+            }
+            .addOnFailureListener { e ->
+                Log.e("Channel", "Error updating online user: $username")
+                // Falls der Online-User nicht gefunden ist, lege ihn an
+                if (e.message?.contains("NOT_FOUND") == true) {
+                    val newUser = OnlineUser(username)
+                    onlineUsersRef.set(newUser)
+                        .addOnSuccessListener {
+                            Log.d("Channel", "Neuer User angelegt: $username")
+                            fetchOnlineUsersInChannel()
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("Channel", "Error: ", e)
+                        }
+                }
             }
     }
 
