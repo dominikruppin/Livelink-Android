@@ -1,5 +1,6 @@
 package com.livelink.ui.profile
 
+import android.app.AlertDialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -14,8 +15,10 @@ import android.widget.AdapterView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import coil.load
+import com.google.android.material.snackbar.Snackbar
 import com.livelink.R
 import com.livelink.SharedViewModel
+import com.livelink.cleanHTMLCode
 import com.livelink.databinding.FragmentEditprofileBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -74,6 +77,7 @@ class EditProfileFragment : Fragment() {
             // Hat der Nutzer irgendwas davon nicht angegeben, wird Standardmäßig ein leerer String übergeben
             binding.EditNameEditText.setText(user.name)
             binding.EditAgeEditText.setText(user.age)
+            binding.EditWildspaceEditText.setText(user.wildspace)
 
             if (user.birthday.isEmpty()) {
                 binding.EditAgeEditText.isClickable = false
@@ -131,6 +135,21 @@ class EditProfileFragment : Fragment() {
                 getContent.launch("image/*")
             }
 
+            // Hinweisicon beim Wildspace Feld geklickt
+            binding.EditWildspaceInputLayout.setEndIconOnClickListener {
+                val alertDialogBuilder = AlertDialog.Builder(requireContext())
+                alertDialogBuilder.apply {
+                    setTitle("Platz zum Ausdrücken")
+                    setMessage("Hier hast du Platz um dich auszutoben.\nMit [BILDURL] kannst du sogar ein Bild einbinden.\nDas Bild wird auf maximal 100x100 begrenzt.\nDu kannst außerdem HTML Formatierungen nutzen.")
+                    setCancelable(true)
+                    setPositiveButton("OK") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                }
+                val alertDialog = alertDialogBuilder.create()
+                alertDialog.show()
+            }
+
             // Beim Klicken aus das Geburtstagsfeld öffnen wir den DatePicker
             binding.EditBirthdayEditText.setOnClickListener {
                 if (user.birthday.isEmpty()) {
@@ -183,6 +202,8 @@ class EditProfileFragment : Fragment() {
             val country = binding.EditCountrySpinner.selectedItem.toString()
             // .. dann für das Geschlecht ..
             val selectedGender = binding.EditGenderSpinner.selectedItem.toString()
+            // .. dann für die Wildspace ..
+            val wildspace = binding.EditWildspaceEditText.text.toString()
 
             // Wir prüfen ob der Name 1 bis 24 Zeichen hat, nicht leer ist und nur Buchstaben, Zahlen und Leerzeichen enthält
             // Ergebnis ist ein Boolean
@@ -193,6 +214,7 @@ class EditProfileFragment : Fragment() {
             // Ebenfalls ein Boolean, der angibt ob das angebene Geburtsdatum okay ist. Noch nicht implementiert.
             var isValidBirthday = false
 
+            // Überprüfen ob das Datum okay ist
             if (binding.EditBirthdayEditText.text.toString().isNotEmpty()) {
                 val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
                 dateFormat.isLenient = false
@@ -305,6 +327,9 @@ class EditProfileFragment : Fragment() {
                         if (selectedGender != viewModel.userData.value?.gender) {
                             updates["gender"] = selectedGender
                         }
+                        if (wildspace != viewModel.userData.value?.wildspace) {
+                            updates["wildspace"] = cleanHTMLCode(wildspace)
+                        }
                         // Und übergeben die Update Map mit den geänderten Profilfeldern dann an die Profilspeichern Funktion
                         saveUserData(updates)
                         viewModel.zipCodeInfos.removeObservers(viewLifecycleOwner)
@@ -377,6 +402,9 @@ class EditProfileFragment : Fragment() {
                 // Wir überprüfen ob sich das Geschlecht geändert hat
                 if (selectedGender != viewModel.userData.value?.gender) {
                     updates["gender"] = selectedGender
+                }
+                if (wildspace != viewModel.userData.value?.wildspace) {
+                    updates["wildspace"] = cleanHTMLCode(wildspace)
                 }
                 if (zipCode != viewModel.userData.value?.zipCode) {
                     if (zipCode.isEmpty()) {

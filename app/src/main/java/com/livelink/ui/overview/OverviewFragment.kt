@@ -35,6 +35,8 @@ class OverviewFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Fokus auf das Constraint Layout, damit die Suche nicht automatisch ausgewählt ist
+        binding.overviewCL.requestFocus()
 
         // Prüft ob ein aktueller User vorhanden ist, also ein Nutzer in der App aktuell eingeloggt ist
         // Falls kein Nutzer eingeloggt ist, navigieren wir zum Login
@@ -42,6 +44,7 @@ class OverviewFragment : Fragment() {
             findNavController().navigate(R.id.loginFragment)
         }
 
+        // Wir beobachten die Eingabe der Usersuche
         binding.searchEditText.addTextChangedListener {
             // Die Eingabe
             val query = it.toString().trim()

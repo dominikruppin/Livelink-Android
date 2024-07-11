@@ -9,7 +9,6 @@ import com.livelink.data.model.Message
 import com.livelink.data.model.ZipCodeInfos
 import com.livelink.data.remote.BotApi
 import com.livelink.data.remote.ZipCodeApi
-import com.livelink.data.remote.ZipCodeApiService
 
 // Repository zum abrufen der API Daten (openPLZ Datenbank)
 class Repository(val zipAPI: ZipCodeApi, val botAPI: BotApi) {
@@ -36,12 +35,16 @@ class Repository(val zipAPI: ZipCodeApi, val botAPI: BotApi) {
         }
     }
 
+    // Funktion um die LiveData mit der Botnachricht zurückzusetzen
+    // Verhindert das mehrfache posten wenn man einen neuen Channel betritt
     fun resetBotMessage() {
         _botMessage.value = null
     }
 
+    // Funktion zum senden einer Nachricht an die Perplexity API (Chatbot)
     suspend fun sendMessageToBot(text: String, apiKey: String) {
             try {
+                // Anfrage an die API erstellen
                 val botRequest = BotRequest(
                     model = "llama-3-sonar-large-32k-online",
                     messages = listOf(
@@ -49,7 +52,9 @@ class Repository(val zipAPI: ZipCodeApi, val botAPI: BotApi) {
                         BotMessage("user", text)
                     )
                 )
+                // Anfrage an die API senden
                 val response = BotApi.apiService.sendMessage("Bearer $apiKey", botRequest)
+                // Holen uns die Antwort des Bots (choices.first enthält die Antwortnachricht)
                 val botReply = response.choices.firstOrNull()?.message?.content ?: "Ich schlafe gerade."
                 _botMessage.postValue(Message("Paul", botReply))
             } catch (e: Exception) {
@@ -57,5 +62,4 @@ class Repository(val zipAPI: ZipCodeApi, val botAPI: BotApi) {
                 _botMessage.postValue(null)
             }
     }
-
 }

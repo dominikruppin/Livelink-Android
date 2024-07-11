@@ -9,12 +9,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
-import retrofit2.http.Path
-import retrofit2.http.Query
 
 // URL der Perplexity API
 const val BASE_URL_BOT = "https://api.perplexity.ai/"
@@ -40,11 +37,9 @@ val botRetrofit = Retrofit.Builder()
 
 interface BotApiService {
 
-    // Wir übergeben die Nachricht als JSON-Body.
-    // Als Antwort kriegen wir eine strukturierte Antwort der API.
-    @Headers(
-        "Content-Type: application/json"
-    )
+    // Wir übergeben die Nachricht als JSON-Body. Im Header ist der API Token.
+    // Als Antwort kriegen wir die generierte Antwort
+    @Headers("Content-Type: application/json")
     @POST("chat/completions")
     suspend fun sendMessage(@Header("Authorization") apiKey: String, @Body request: BotRequest): BotResponse
 }

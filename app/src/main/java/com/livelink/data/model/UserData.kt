@@ -1,7 +1,6 @@
 package com.livelink.data.model
 
-import com.livelink.data.model.Channel
-import com.livelink.data.model.ProfileVisitor
+import com.google.firebase.firestore.FieldValue
 
 // Datenklasse zum speichern(FireStore) und abrufen der Daten eines Users
 data class UserData(
@@ -21,5 +20,7 @@ data class UserData(
     val city: String = "",
     val lastChannels: List<Channel> = emptyList(),
     val recentProfileVisitors: List<ProfileVisitor> = emptyList(),
-    val lockInfo: LockInfo? = null
+    val lockInfo: LockInfo? = null,
+    val regDate: Any = FieldValue.serverTimestamp(),
+    val wildspace: String = ""
 )

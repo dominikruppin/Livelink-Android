@@ -33,6 +33,13 @@
     <string name="zip_code">Postleitzahl</string>
     <string name="country">Land</string>
     <string name="greeting">Hallo %s</string>
+    <string name="age_onlineUser">(%s)</string>
+    <string name="profile_reg">%s hat sich am %s um %s hier registriert.</string>
+    <string name="profile_lock">%s ist von %s %s.\nBegründung:\n%s</string>
+    <string name="profile_offline">Ist aktuell Offline</string>
+    <string name="profile_online">Online im Channel %s</string>
+    <string name="search_channels">Suche nach Channel</string>
+    <string name="wildspace">Wildspace</string>
     <string-array name="gender_options">
         <item>Keine Angabe</item>
         <item>Männlich</item>

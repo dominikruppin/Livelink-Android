@@ -14,11 +14,11 @@ import coil.load
 // Wir übergeben eine Liste aus Strings, welche die Kategorie beinhalten und die Liste der
 // Channel, außerdem definieren wir eine Funktion die aufgerufen wird wenn man einen Channel anklickt
 class ChannelsAdapter(
-    private val dataset: List<Pair<String, List<Channel>>>,
-    private val onChannelItemClick: (Channel) -> Unit) :
-    RecyclerView.Adapter<ChannelsAdapter.CategoryViewHolder>() {
+    private var dataset: List<Pair<String, List<Channel>>>,
+    private val onChannelItemClick: (Channel) -> Unit
+) : RecyclerView.Adapter<ChannelsAdapter.CategoryViewHolder>() {
 
-        // ViewHolder für die Kategorien erstellen und das Layout inflaten
+    // ViewHolder für die Kategorien erstellen und das Layout inflaten
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CategoryViewHolder {
         val binding = ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return CategoryViewHolder(binding)
@@ -46,7 +46,7 @@ class ChannelsAdapter(
     inner class ChannelInnerAdapter(private val channels: List<Channel>) :
         RecyclerView.Adapter<ChannelInnerAdapter.ChannelViewHolder>() {
 
-            // Inflaten das Layout für die Channel
+        // Inflaten das Layout für die Channel
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
             val binding = ItemChannelBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             return ChannelViewHolder(binding)
@@ -71,5 +71,11 @@ class ChannelsAdapter(
         // Bindet die item_channel.xml für die Channel
         inner class ChannelViewHolder(val binding: ItemChannelBinding) :
             RecyclerView.ViewHolder(binding.root)
+    }
+
+    // Wir geben dem Adapter die neuen Daten und sagen ihm er soll sich updaten
+    fun updateDataset(newDataset: List<Pair<String, List<Channel>>>) {
+        dataset = newDataset
+        notifyDataSetChanged()
     }
 }

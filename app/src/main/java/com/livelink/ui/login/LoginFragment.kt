@@ -96,8 +96,14 @@ class LoginFragment : Fragment() {
                         viewModel.login(email, password) { success ->
                             // Wir kriegen die Antwort und prüfen ob der Loginvorgang erfolgreich war. Falls ja..
                             if (success) {
-                                // .. navigieren wir zum Overview Fragment
-                                findNavController().navigate(R.id.overviewFragment)
+                                // .. navigieren wir zum Overview Fragment falls keine Sperre besteht
+                                viewModel.userData.observe(viewLifecycleOwner) { userData ->
+                                    if (userData != null) {
+                                        if (userData.lockInfo == null) {
+                                            findNavController().navigate(R.id.overviewFragment)
+                                        }
+                                    }
+                                }
                                 // .. falls nein ..
                             } else {
                                 // .. geben wir eine Fehlermeldung aus

@@ -11,4 +11,5 @@
     <color name="links">#007AFF</color>
     <color name="background">#29378C</color>
     <color name="labels">#616161</color>
+    <color name="red">#FF0000</color>
 </resources>

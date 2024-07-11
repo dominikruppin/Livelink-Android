@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.database.ServerValue
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,6 +28,7 @@ import com.livelink.data.model.ProfileVisitor
 import com.livelink.data.remote.BotApi
 import com.livelink.data.remote.ZipCodeApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -85,17 +87,19 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     val searchResults: LiveData<List<UserData>>
         get() = _searchResults
 
+    // Speichert die aktuelle Liste der OnlineUser im Channel
     private val _onlineUsers = MutableLiveData<List<OnlineUser>>()
+    // Getter für die OnlineUser
     val onlineUsers: LiveData<List<OnlineUser>>
         get() = _onlineUsers
 
+    // Verweis auf die Livedata im Repository, welche die Antwort von der
+    // Perplexity API speichert
     val botMessage: LiveData<Message?> = repository.botMessage
 
     private var userDataDocumentReference: DocumentReference? = null
     private var userDataListener: ListenerRegistration? = null
     private var messageListener: ListenerRegistration? = null
-    private var onlineUserListener: ListenerRegistration? = null
-
 
     // Wird beim erstellen des ViewModels ausgeführt (also appstart)
     init {
@@ -138,7 +142,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-
+    // Aktualisieren des Geburtsdatums
     fun updateBirthday() {
         Log.d("UpdateBirthday", "UpdateBirthday aufgerufen. ")
         Log.d("UpdateBirthday", "UserData ist: ${userData.value}")
@@ -168,6 +172,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // Funktion zum senden einer Nachricht an die Perplexity API (Chatbot)
     fun sendMessageToBot(text: String) {
         viewModelScope.launch {
             val apiKey = BuildConfig.PERPLEXITY_API_KEY
@@ -308,8 +313,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
-
-
     // Funktion zum abrufen der Nachrichten eines Channels
     fun fetchMessages(channelJoin: ChannelJoin) {
         // Zuerst den bestehenden Listener entfernen, falls vorhanden
@@ -355,9 +358,10 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         val sixSecondsAgo = Timestamp.now().let {
             Timestamp(it.seconds - 5, it.nanoseconds)
         }
+        Log.d("Channel", "Vergleichstimestamp: $sixSecondsAgo")
         channelsReference.document(channelJoin!!.channelID)
             .collection("onlineUsers")
-            .whereGreaterThan("timestamp", sixSecondsAgo)
+            //.whereGreaterThan("timestamp", ServerValue.TIMESTAMP)
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { querySnapshot ->
@@ -375,34 +379,104 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
     }
 
-    fun addOrUpdateOnlineUser() {
+    // Nutzer zu den Online Usern eines Channels hinzufügen in Firestore
+    fun addOrUpdateOnlineUserData() {
         val channelJoin = currentChannel.value
-        val username = userData.value!!.username
+        val username = userData.value?.username ?: ""
+        val gender = userData.value?.gender ?: ""
+        val age = userData.value?.age ?: ""
+        val profilePic = userData.value?.profilePicURL ?: ""
+        val status = userData.value?.status ?: 0
+        val joinTimestamp = FieldValue.serverTimestamp()
         val onlineUsersRef = channelsReference
             .document(channelJoin!!.channelID)
             .collection("onlineUsers")
             .document(username)
 
-        Log.d("Channel", "Versuche nun zu updaten")
+        Log.d("Channel", "Versuche nun Userdaten zu updaten")
+        onlineUsersRef.set(mapOf(
+            "username" to username,
+            "age" to age,
+            "gender" to gender,
+            "profilePic" to profilePic,
+            "status" to status,
+            "joinTimestamp" to joinTimestamp,
+            "timestamp" to FieldValue.serverTimestamp()
+        )).addOnSuccessListener {
+            Log.d("Channel", "Userdaten geupdatet für $username")
+            fetchOnlineUsersInChannel()
+        }.addOnFailureListener { e ->
+            Log.e("Channel", "Error updating user data: $username", e)
+        }
+    }
+
+    // Funktion um den eigenen Timestamp in den onlineUsers zu updaten
+    fun updateOnlineUserTimestamp() {
+        val channelJoin = currentChannel.value
+        val username = userData.value?.username ?: ""
+        val onlineUsersRef = channelsReference
+            .document(channelJoin!!.channelID)
+            .collection("onlineUsers")
+            .document(username)
+
         onlineUsersRef.update("timestamp", FieldValue.serverTimestamp())
             .addOnSuccessListener {
                 Log.d("Channel", "Timestamp geupdatet für $username")
                 fetchOnlineUsersInChannel()
             }
             .addOnFailureListener { e ->
-                Log.e("Channel", "Error updating online user: $username")
-                // Falls der Online-User nicht gefunden ist, lege ihn an
-                if (e.message?.contains("NOT_FOUND") == true) {
-                    val newUser = OnlineUser(username)
-                    onlineUsersRef.set(newUser)
-                        .addOnSuccessListener {
-                            Log.d("Channel", "Neuer User angelegt: $username")
-                            fetchOnlineUsersInChannel()
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("Channel", "Error: ", e)
-                        }
+                Log.e("Channel", "Error updating timestamp for: $username", e)
+            }
+    }
+
+    suspend fun checkUserOnlineInAnyChannel(username: String): Pair<Boolean, String?> {
+        var isOnline = false
+        var foundChannelID: String? = null
+
+        // Alle Channel durchgehen, um nach dem Nutzer zu suchen
+        try {
+            val channelsSnapshot = channelsReference.get().await()
+            for (channelDoc in channelsSnapshot.documents) {
+                val channelID = channelDoc.id
+
+                // Prüfen, ob der Benutzer im aktuellen Kanal online ist
+                val onlineUserDoc = channelsReference
+                    .document(channelID)
+                    .collection("onlineUsers")
+                    .document(username)
+                    .get()
+                    .await()
+
+                if (onlineUserDoc.exists()) {
+                    isOnline = true
+                    foundChannelID = channelID
+                    break
                 }
+            }
+        } catch (e: Exception) {
+            Log.e("Channel", "Error checking user online status", e)
+        }
+
+        return Pair(isOnline, foundChannelID)
+    }
+
+
+    // Funktion zum Verlassen eines Users (Löscht die Nutzerdaten aus der OnlineUsers
+    // Sammlung, damit der Nutzer nicht mehr als online angezeigt wird
+    fun onChannelLeave() {
+        val channelJoin = currentChannel.value
+        val username = userData.value?.username ?: ""
+        val onlineUsersRef = channelsReference
+            .document(channelJoin!!.channelID)
+            .collection("onlineUsers")
+            .document(username)
+
+        onlineUsersRef.delete()
+            .addOnSuccessListener {
+                Log.d("Channel", "User entfernt: $username")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Channel", "Error removing user: $username", e)
             }
     }
 
@@ -549,6 +623,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
     }
 
+    // Funktion falls ein Nutzer in einer Chatnachricht einen Command (also Nachricht
+    // beginnt mit einem /) ausführt.
     fun processCommand(command: String) {
         when {
             command.startsWith("/profil") || command.startsWith("/w") -> {
@@ -557,13 +633,13 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     Toast.makeText(getApplication(), "Gib einen Nutzernamen an.", Toast.LENGTH_SHORT).show()
                     return
                 }
-
                 val username = parts[1]
                 openProfile(username)
             }
             command.startsWith("/lock") || command.startsWith("/userlock") -> {
                 lockUser(command)
             }
+            else -> Toast.makeText(getApplication(), "Den Befehl $command gibt es nicht.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -700,7 +776,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
     }
 
-
     // Funktion zur Aufhebung der Sperre eines Nutzers
     fun unlockUser(username: String, isSystem: Boolean) {
         if (!isSystem && userData.value!!.status < 5) {
@@ -740,8 +815,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 Toast.makeText(getApplication(), "Fehler beim Suchen des Nutzers mit Username '$username'.", Toast.LENGTH_LONG).show()
             }
     }
-
-
 
 
     // Funktion um nach Nutzern zu suchen

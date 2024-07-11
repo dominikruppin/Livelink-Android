@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.livelink.data.model.UserData
 import com.livelink.databinding.ItemUserSearchResultBinding
 
+// Adapter für die Username-Suche, zur Darstellung der Suchergebnisse
 class SearchResultsAdapter(
     private val context: Context,
     private val dataset: List<UserData>,
@@ -17,29 +18,23 @@ class SearchResultsAdapter(
             RecyclerView.ViewHolder(binding.root)
 
 
+    // Layout anbinden
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SearchResultsAdapter.UserViewHolder {
         val binding = ItemUserSearchResultBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return UserViewHolder(binding)
     }
 
+    // Daten anbinden (Username) und das Profil des Users öffnen, wenn man
+    // ihn anklickt
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val item = dataset[position]
-        // Wenn es das erste Element ist..
-        /*val cardRadius = context.resources.getDimensionPixelSize(
-            when {
-                dataset.size == 1 -> R.dimen.card_corner_radius_all
-                position == 0 -> R.dimen.card_corner_radius_top
-                position == dataset.size - 1 -> R.dimen.card_corner_radius_bottom
-                else -> R.dimen.card_corner_radius_none
-            }
-        )
-        holder.binding.cardView.radius = context.resources.getDimension(cardRadius).toFloat()
-        */
         holder.binding.usernameTextView.text = item.username
-
-        holder.itemView.setOnClickListener { onUserClicked(item) }
+        holder.itemView.setOnClickListener {
+            onUserClicked(item)
+        }
     }
 
+    // Größe der Liste
     override fun getItemCount(): Int {
         return dataset.size
     }

@@ -17,6 +17,15 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <TextView
+                android:id="@+id/textViewUserlock"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/red"
+                android:text=""
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
+
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/imageViewProfilePic"
                 android:layout_width="100dp"
@@ -42,16 +51,41 @@
                 android:text=""
                 android:textSize="14sp"
                 android:textColor="@android:color/darker_gray"
+                android:layout_marginTop="4dp"
+                android:layout_gravity="center_horizontal" />
+
+            <TextView
+                android:id="@+id/textViewOnlineStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="14sp"
+                android:textStyle="bold"
                 android:layout_marginTop="8dp"
                 android:layout_gravity="center_horizontal" />
+
+            <TextView
+                android:id="@+id/textViewReg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textSize="14sp"
+                android:textColor="@color/black"
+                android:layout_marginTop="16dp"
+                android:layout_gravity="center_horizontal" />
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="16dp">
+                android:orientation="vertical">
 
                 <LinearLayout
+                    android:id="@+id/nameLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -74,6 +108,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/genderLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -96,6 +131,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/ageLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -118,6 +154,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/birthdayLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -140,6 +177,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/relationshipLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -162,6 +200,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/zipcodeLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -184,6 +223,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/countryLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -206,6 +246,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/stateLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -228,6 +269,7 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/cityLL"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
@@ -248,7 +290,40 @@
                         android:text=""
                         android:textSize="14sp"/>
                 </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/wildspaceTitelLL"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Wildspace:"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginEnd="8dp"/>
+                </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/wildspaceContentLL"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="8dp">
+
+                        <TextView
+                            android:id="@+id/wildspaceContent"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Wildspace:"
+                            android:textSize="14sp"
+                            android:layout_marginEnd="8dp"/>
+                    </LinearLayout>
             </LinearLayout>
+            </ScrollView>
 
             <Button
                 android:id="@+id/btnClose"

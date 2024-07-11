@@ -2,7 +2,16 @@ package com.livelink
 
 import android.app.AlertDialog
 import android.content.DialogInterface
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.text.Html
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ImageSpan
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -21,28 +30,45 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.HtmlCompat
 import com.livelink.databinding.ActivityMainBinding
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
+import coil.Coil
 import coil.load
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
 import com.livelink.data.model.UserData
 import com.livelink.data.model.ProfileVisitor
 import com.livelink.databinding.PopupProfileBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.livelink.data.model.MyAppGlideModule
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private val viewModel: SharedViewModel by viewModels()
+    private lateinit var popupBinding: PopupProfileBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Layout Binden
         binding = ActivityMainBinding.inflate(layoutInflater)
+        popupBinding = PopupProfileBinding.inflate(LayoutInflater.from(this))
         // Layout anzeigen
         setContentView(binding.root)
         // Toolbar aus Layout binden und anzeigen
@@ -147,69 +173,76 @@ class MainActivity : AppCompatActivity() {
 
             val lockInfo = user.lockInfo
             if (lockInfo != null) {
-                val expirationTimestamp = lockInfo.expirationTimestamp
-                // Aktuelle Zeit
-                val currentTimeMillis = System.currentTimeMillis()
-
-                if (expirationTimestamp == -1L || currentTimeMillis < expirationTimestamp) {
-                    Log.d("Lock", "Nutzer ist noch gesperrt")
-                    isLocked(user)
-                } else {
-                    Log.d("Lock", "Nutzer ist nicht mehr gesperrt.")
-                    viewModel.unlockUser(
-                        user.username,
-                        true
-                    ) // Funktion zum Entfernen der Sperre aufrufen
-                }
+                Log.d("Lock", "Nutzer ist noch gesperrt")
+                isLocked(user)
             }
         }
 
-            // Wenn ein Nutzerprofil aufgerufen wird, werden die Daten
-            // in die LiveData (profileUserData) geladen
-            // Hier beobachten wir die LiveData. Neue LiveData bedeutet
-            // das ein neues Profil geöffnet werden soll
-            viewModel.profileUserData.observe(this) { userData ->
-                // Wir erstellen aus dem aktuell eingeloggten User und seinem
-                // Usernamen und der URL zu seinem Profilbild ein neues Objekt
-                // vom Typ ProfileVisitor
-                val visitor = viewModel.userData.value?.let {
-                    ProfileVisitor(
-                        it.username,
-                        it.profilePicURL
-                    )
-                }
-                // Wenn die Daten des Users dessen Profil wir aufrufen wollen
-                // nicht null sind..
-                if (userData != null) {
-                    // Dann rufen wir die Funktion zum öffnen des Profils mit
-                    // diesen Daten auf
-                    showProfilePopup(userData)
-                    // Wir prüfen ob wir NICHT unser eigenes Profil aufrufen
-                    if (viewModel.userData.value!!.username != userData.username) {
-                        // Wir prüfen ob unsere eigenen Daten nicht NULL sind
-                        if (visitor != null) {
-                            // Wir speichern unsere Daten (ProfileUser Objekt)
-                            // in den UserData des Nutzers, dessen Profil wir
-                            // aufgerufen haben in den letzten Profilbesuchern
-                            // Dafür übergeben wir unsere eigenen Daten als UserData
-                            // und die des Nutzers, dessen Profil wir aufgerufen haben
-                            // als ProfileVisitor
-                            viewModel.addProfileVisitor(userData, visitor)
-                        }
+        // Wenn ein Nutzerprofil aufgerufen wird, werden die Daten
+        // in die LiveData (profileUserData) geladen
+        // Hier beobachten wir die LiveData. Neue LiveData bedeutet
+        // das ein neues Profil geöffnet werden soll
+        viewModel.profileUserData.observe(this) { userData ->
+            // Wir erstellen aus dem aktuell eingeloggten User und seinem
+            // Usernamen und der URL zu seinem Profilbild ein neues Objekt
+            // vom Typ ProfileVisitor
+            val visitor = viewModel.userData.value?.let {
+                ProfileVisitor(
+                    it.username,
+                    it.profilePicURL
+                )
+            }
+            // Wenn die Daten des Users dessen Profil wir aufrufen wollen
+            // nicht null sind..
+            if (userData != null) {
+                // Dann rufen wir die Funktion zum öffnen des Profils mit
+                // diesen Daten auf
+                showProfilePopup(userData)
+                // Wir prüfen ob wir NICHT unser eigenes Profil aufrufen
+                if (viewModel.userData.value!!.username != userData.username) {
+                    // Wir prüfen ob unsere eigenen Daten nicht NULL sind
+                    if (visitor != null) {
+                        // Wir speichern unsere Daten (ProfileUser Objekt)
+                        // in den UserData des Nutzers, dessen Profil wir
+                        // aufgerufen haben in den letzten Profilbesuchern
+                        // Dafür übergeben wir unsere eigenen Daten als UserData
+                        // und die des Nutzers, dessen Profil wir aufgerufen haben
+                        // als ProfileVisitor
+                        viewModel.addProfileVisitor(userData, visitor)
                     }
                 }
             }
         }
+    }
 
+    // Funktion falls ein User gesperrt wird
     fun isLocked(userData: UserData) {
+        // Den User ausloggen
         viewModel.auth.signOut()
-        findNavController(R.id.nav_host_fragment_content_main).navigate(R.id.loginFragment)
+        // UserData reseten
+        viewModel.setupUserEnv()
+        // navController holen
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val currentDestination = navController.currentDestination
+        // Wenn der Nutzer nicht im LoginFragment ist, werfen wir ihn dahin
+        if (currentDestination?.id != R.id.loginFragment) {
+            findNavController(R.id.nav_host_fragment_content_main).navigate(R.id.loginFragment)
+        }
+        // Holen uns den Timestamp seiner Sperre
         val expirationTimestamp = userData.lockInfo!!.expirationTimestamp
+        // Wandeln den in ein lesbares Format um
         val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-        val expirationDate = if (userData.lockInfo.expirationTimestamp == -1L) "permanent" else "bis zum " + dateFormat.format(Date(expirationTimestamp))
+        // Anzeige der Sperrdauer
+        val expirationDate =
+            if (userData.lockInfo.expirationTimestamp == -1L) "permanent gesperrt." else "bis zum " + dateFormat.format(
+                Date(expirationTimestamp)
+            ) + " gesperrt und wird im Laufe des darauffolgenden Tages wieder entsperrt."
+        // Holen uns den Grund der Sperre
         val userLockReason = userData.lockInfo.reason
+        // Und bauen nun einen AlertDialog zur Anzeige der Sperre
         val builder = AlertDialog.Builder(this)
-        val lockText = "Dein Account wurde von ${userData.lockInfo.lockedBy} <b>$expirationDate</b> gesperrt und wird im Laufe des darauffolgenden Tages wieder entsperrt.\n<b>Begründung:</b><br>${userLockReason}"
+        val lockText =
+            "Dein Account wurde von ${userData.lockInfo.lockedBy} <b>$expirationDate</b>\n<b>Begründung:</b><br>${userLockReason}"
         builder.setTitle("Account gesperrt")
         builder.setMessage(fromHtml(lockText))
         builder.setPositiveButton("OK") { dialogInterface: DialogInterface, _: Int ->
@@ -224,7 +257,6 @@ class MainActivity : AppCompatActivity() {
     // Funktion zum anzeigen des Profils als Popup
     private fun showProfilePopup(userData: UserData) {
         // Wir inflaten und binden das Layout (popup_profile.xml)
-        val popupBinding = PopupProfileBinding.inflate(LayoutInflater.from(this))
         val popupView = popupBinding.root
 
         // Margins in dp
@@ -234,12 +266,13 @@ class MainActivity : AppCompatActivity() {
 
         // Berechne die Breite des Popup-Fensters mit Berücksichtigung der Margins
         val width = resources.displayMetrics.widthPixels - 2 * marginInPx
+        val height = resources.displayMetrics.heightPixels - 2 * marginInPx
 
         // Legen die Attribute des Popups fest
         val popupWindow = PopupWindow(
             popupView,
             width,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
+            height,
             true
         )
 
@@ -252,81 +285,194 @@ class MainActivity : AppCompatActivity() {
             popupWindow.dismiss()
         }
 
+        // Anzeigen der Nutzersperre für User ab Status 4
+        if (userData.lockInfo != null && viewModel.userData.value?.status!! > 4) {
+            popupBinding.textViewUserlock.isVisible = true
+            val expirationTimestamp = userData.lockInfo!!.expirationTimestamp
+            // Wandeln den in ein lesbares Format um
+            val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+            // Anzeige der Sperrdauer
+            val expirationDate =
+                if (userData.lockInfo.expirationTimestamp == -1L) "permanent gesperrt." else "bis zum " + dateFormat.format(
+                    Date(expirationTimestamp)
+                ) + " gesperrt und wird im Laufe des darauffolgenden Tages wieder entsperrt."
+            popupBinding.textViewUserlock.text = this.getString(
+                R.string.profile_lock,
+                userData.username,
+                userData.lockInfo.lockedBy,
+                expirationDate,
+                userData.lockInfo.reason
+            )
+        } else {
+            popupBinding.textViewUserlock.isVisible = false
+        }
+
         // Wir füllen die verschiedenen Views mit den Profildaten
         popupBinding.textViewUsername.text = userData.username
+        popupBinding.textViewStatus.text = getUserStatus(userData.status)
+        popupBinding.textViewOnlineStatus.text = ""
+
         if (userData.profilePicURL.isNotEmpty()) {
             popupBinding.imageViewProfilePic.load(userData.profilePicURL)
         } else {
             popupBinding.imageViewProfilePic.setImageResource(R.drawable.placeholder_profilepic)
         }
 
-        popupBinding.textViewStatus.text = getUserStatus(userData.status)
+        val appContext = applicationContext
+        CoroutineScope(Dispatchers.IO).launch {
+            val (isOnline, channelID) = viewModel.checkUserOnlineInAnyChannel(userData.username)
+            // Auf dem UI-Thread das Ergebnis anzeigen
+            withContext(Dispatchers.Main) {
+                // Den Online-Status anzeigen
+                if (isOnline) {
+                    // Online + Channel anzeigen
+                    popupBinding.textViewOnlineStatus.text = appContext.getString(R.string.profile_online, channelID)
+                    popupBinding.textViewOnlineStatus.setTextColor(Color.GREEN)
+                } else {
+                    // Offline anzeigen
+                    popupBinding.textViewOnlineStatus.text = appContext.getString(R.string.profile_offline)
+                    popupBinding.textViewOnlineStatus.setTextColor(Color.RED)
+                }
+            }
+        }
+
+        popupBinding.textViewReg.text = this.getString(
+            R.string.profile_reg,
+            userData.username,
+            convertTimestampToDate(userData.regDate),
+            convertTimestampToTime(userData.regDate)
+        )
 
         if (userData.name.isNotEmpty()) {
-            popupBinding.textViewName.isVisible = true
+            popupBinding.nameLL.isVisible = true
             popupBinding.textViewName.text = userData.name
         } else {
-            popupBinding.textViewName.isVisible = false
+            popupBinding.nameLL.isVisible = false
         }
 
         val gender = userData.gender
         if (gender.isNotEmpty() && gender != "Keine Angabe") {
-            popupBinding.textViewGender.isVisible = true
+            popupBinding.genderLL.isVisible = true
             popupBinding.textViewGender.text = gender
         } else {
-            popupBinding.textViewGender.isVisible = false
+            popupBinding.genderLL.isVisible = false
         }
 
         val age = userData.age
         if (age.isNotEmpty() && age != "0") {
-            popupBinding.textViewAge.isVisible = true
+            popupBinding.ageLL.isVisible = true
             popupBinding.textViewAge.text = age
         } else {
-            popupBinding.textViewAge.isVisible = false
+            popupBinding.ageLL.isVisible = false
         }
 
         if (userData.birthday.isNotEmpty()) {
-            popupBinding.textViewBirthday.isVisible = true
+            popupBinding.birthdayLL.isVisible = true
             popupBinding.textViewBirthday.text = userData.birthday
         } else {
-            popupBinding.textViewBirthday.isVisible = false
+            popupBinding.birthdayLL.isVisible = false
         }
 
         val relationshipStatus = userData.relationshipStatus
         if (relationshipStatus.isNotEmpty() && relationshipStatus != "Keine Angabe") {
-            popupBinding.textViewRelationshipStatus.isVisible = true
+            popupBinding.relationshipLL.isVisible = true
             popupBinding.textViewRelationshipStatus.text = relationshipStatus
         } else {
-            popupBinding.textViewRelationshipStatus.isVisible = true
+            popupBinding.relationshipLL.isVisible = false
         }
 
         if (userData.zipCode.isNotEmpty()) {
-            popupBinding.textViewZip.isVisible = true
+            popupBinding.zipcodeLL.isVisible = true
             popupBinding.textViewZip.text = userData.zipCode
         } else {
-            popupBinding.textViewZip.isVisible = false
+            popupBinding.zipcodeLL.isVisible = false
         }
 
         val country = userData.country
         if (country.isNotEmpty() && country != "Keine Angabe") {
-            popupBinding.textViewCountry.isVisible = true
+            popupBinding.countryLL.isVisible = true
             popupBinding.textViewCountry.text = country
         } else {
-            popupBinding.textViewCountry.isVisible = false
+            popupBinding.countryLL.isVisible = false
         }
 
         if (userData.state.isNotEmpty()) {
-            popupBinding.textViewState.isVisible = true
+            popupBinding.stateLL.isVisible = true
             popupBinding.textViewState.text = userData.state
         } else {
-            popupBinding.textViewState.isVisible = false
+            popupBinding.stateLL.isVisible = false
         }
 
         if (userData.city.isNotEmpty()) {
-            popupBinding.textViewCity.isVisible = true
+            popupBinding.cityLL.isVisible = true
             popupBinding.textViewCity.text = userData.city
         } else {
-            popupBinding.textViewCity.isVisible = false
+            popupBinding.cityLL.isVisible = false
+        }
+
+        // Prüfen ob die Wildspace vorhanden ist
+        if (userData.wildspace.isNotEmpty()) {
+            // Mit dem Regex filtern wir die Bildurl. Die hat das Format [URL]
+            val pattern = "\\[(.*?)]".toRegex()
+
+            // Wir suchen uns die erste BildURL
+            val matchResult = pattern.find(userData.wildspace)
+            val imageUrl = matchResult?.groupValues?.getOrNull(1) ?: ""
+
+            // Alle Bildurls außer der ersten durch leeren String ersetzen
+            // So stellen wir sicher, dass in einer Wildspace nur ein Bild sein kann
+            val replacedText = userData.wildspace.replace(pattern) { result ->
+                if (result.range.first != matchResult?.range?.first) {
+                    ""
+                    // Hier setzen wir für die erste BildURL den Imagetag um
+                    // das Bild dann im Profil anzuzeigen. Maximale Größe ist
+                    // 100x100 Pixel
+                } else {
+                    Log.d("Profil", "URL: ${result.groupValues[1]}")
+                    "<img src='${imageUrl}' style='max-width: 100px; max-height: 100px;' />"
+                }
+            }
+
+            CoroutineScope(Dispatchers.Main).launch {
+                val spanned = withContext(Dispatchers.IO) {
+                    HtmlCompat.fromHtml(
+                        replacedText,
+                        HtmlCompat.FROM_HTML_MODE_COMPACT,
+                        object : Html.ImageGetter {
+                            override fun getDrawable(source: String): Drawable? {
+                                return try {
+                                    Log.d("Profil", "Trying to load image... $source")
+                                    val url = URL(source)
+                                    val connection = url.openConnection() as HttpURLConnection
+                                    connection.doInput = true
+                                    connection.connect()
+                                    val input = connection.inputStream
+                                    val drawable = Drawable.createFromStream(input, "srcName")
+                                    if (drawable != null) {
+                                        drawable.setBounds(0, 0, drawable.intrinsicWidth, drawable.intrinsicHeight)
+                                    }
+                                    input.close()
+                                    Log.d("Profil", "Image loaded successfully")
+                                    drawable
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                    Log.e("Profil", "Error loading image: $source", e)
+                                    ColorDrawable(Color.TRANSPARENT)
+                                }
+                            }
+                        },
+                        null
+                    )
+                }
+
+                popupBinding.wildspaceContent.text = SpannableStringBuilder.valueOf(spanned)
+
+                popupBinding.wildspaceTitelLL.isVisible = true
+                popupBinding.wildspaceContentLL.isVisible = true
+            }
+        } else {
+            popupBinding.wildspaceTitelLL.isVisible = false
+            popupBinding.wildspaceContentLL.isVisible = false
         }
     }
 
