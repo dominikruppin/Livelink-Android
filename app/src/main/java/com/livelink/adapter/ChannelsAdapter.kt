@@ -64,6 +64,7 @@ class ChannelsAdapter(
             }
         }
 
+        // Größe der Liste
         override fun getItemCount(): Int {
             return channels.size
         }

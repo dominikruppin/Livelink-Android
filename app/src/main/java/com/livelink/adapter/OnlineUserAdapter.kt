@@ -44,6 +44,7 @@ class OnlineUserAdapter(
             holder.binding.textViewAge.text =
                 holder.itemView.context.getString(R.string.age_onlineUser, onlineUser.age)
         }
+        // Basierend auf dem Geschlecht das Icon in der Userliste anzeigen
         when (onlineUser.gender.lowercase()) {
             "männlich" -> holder.binding.imageViewGender.setImageResource(R.drawable.baseline_male_24)
             "weiblich" -> holder.binding.imageViewGender.setImageResource(R.drawable.baseline_female_24)

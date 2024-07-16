@@ -1,5 +1,6 @@
 package com.livelink.ui.channels
 
+import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
@@ -219,6 +220,7 @@ class ChannelFragment : Fragment() {
     }
 
     // Funktion um die Höhe der Statusbar zu erhalten
+    @SuppressLint("InternalInsetResource")
     private fun getStatusBarHeight(): Int {
         val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
         return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0

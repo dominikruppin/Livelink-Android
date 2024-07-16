@@ -50,6 +50,7 @@ class MessageAdapter(
         }
     }
 
+    // Größe der Liste
     override fun getItemCount(): Int {
         return dataset.size
     }

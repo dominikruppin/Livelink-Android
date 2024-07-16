@@ -7,17 +7,12 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Html
-import android.text.Spannable
-import android.text.SpannableString
 import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.style.ImageSpan
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.PopupWindow
 import android.widget.TextView
@@ -34,25 +29,17 @@ import androidx.core.text.HtmlCompat
 import com.livelink.databinding.ActivityMainBinding
 import androidx.core.view.GravityCompat
 import androidx.core.view.isVisible
-import coil.Coil
 import coil.load
-import coil.request.ImageRequest
-import coil.request.SuccessResult
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.livelink.data.model.UserData
 import com.livelink.data.model.ProfileVisitor
 import com.livelink.databinding.PopupProfileBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.livelink.data.model.MyAppGlideModule
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -121,6 +108,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Wir legen fest, wann die Actionbar zu sehen ist und den jeweiligen angezeigten Titel
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.overviewFragment -> {

@@ -429,6 +429,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
     }
 
+    // Funktion um zu prüfen ob ein User in einem Channel online ist (Anzeige im Profil)
     suspend fun checkUserOnlineInAnyChannel(username: String): Pair<Boolean, String?> {
         var isOnline = false
         var foundChannelID: String? = null
