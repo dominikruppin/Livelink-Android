@@ -85,5 +85,5 @@ Nach Nutzern suchen.
 - **Retrofit: openPLZ API**: Zum abrufen von Informationen zu einer Postleitzahl
 - **Retrofit: Perplexity API**: Anbindung an den Chatbot zum beantworten von Fragen
 - **Coil**: Laden von Bildern
-- **MVVM Pattern*
+- **MVVM Pattern**
 - **Benutzte Librarys**: hdodenhof/CircleImageView
