@@ -1,6 +1,7 @@
 # Livelink
 
 Willkommen zu **Livelink**, der App, mit der du in Echtzeit mit anderen Nutzern chatten kannst, die sich in denselben Channels befinden. Entdecke neue Leute und Themen.
+Entwickelt wurde die App im Rahmen des Abschlussprojekts für das Syntax Institut.
 
 ## Inhaltsverzeichnis
 
@@ -81,3 +82,5 @@ Nach Nutzern suchen.
 - **Firebase Firestore**: Datenbank zum Speichern von Benutzer- und Chat-Daten.
 - **Firebase Auth**: Authentifizierung und Benutzerverwaltung.
 - **HTML**: Zur Darstellung und Formatierung von Inhalten innerhalb der App.
+- **openPLZ API**: Zum abrufen von Informationen zu einer Postleitzahl
+- **Perplexity API**: Anbindung an den Chatbot zum beantworten von Fragen
