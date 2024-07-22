@@ -82,5 +82,6 @@ Nach Nutzern suchen.
 - **Firebase Firestore**: Datenbank zum Speichern von Benutzer- und Chat-Daten.
 - **Firebase Auth**: Authentifizierung und Benutzerverwaltung.
 - **HTML**: Zur Darstellung und Formatierung von Inhalten innerhalb der App.
-- **openPLZ API**: Zum abrufen von Informationen zu einer Postleitzahl
-- **Perplexity API**: Anbindung an den Chatbot zum beantworten von Fragen
+- **Retrofit: openPLZ API**: Zum abrufen von Informationen zu einer Postleitzahl
+- **Retrofit: Perplexity API**: Anbindung an den Chatbot zum beantworten von Fragen
+- **Coil**: Laden von Bildern
